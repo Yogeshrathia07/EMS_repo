@@ -1,0 +1,94 @@
+<%- include\('../partials/head', {title: 'Timesheets — Admin'}) %>
+<div class="app-layout">
+  <%- include\('../partials/sidebar-admin') %>
+  <div class="main-content">
+    <header class="page-header">
+        <button class="mobile-menu-btn" onclick="openSidebar()"><i class="bx bx-menu"></i></button>
+      <div><div class="page-title"><i class="bx bxs-time-five"></i> All Timesheets</div><div class="page-subtitle">Review and manage all timesheet submissions</div></div>
+      <div class="header-actions">
+        <select id="filter-status" class="form-control" style="width:140px" onchange="loadTs()">
+          <option value="">All Status</option>
+          <option value="pending">Pending</option>
+          <option value="approved">Approved</option>
+          <option value="rejected">Rejected</option>
+        </select>
+      </div>
+    </header>
+    <div class="page-body">
+      <div class="card">
+        <div class="card-body">
+          <div class="table-wrapper">
+            <table>
+              <thead><tr><th>Employee</th><th>Role</th><th>Week Start</th><th>Week End</th><th>Total Hours</th><th>Entries</th><th>Status</th><th>Actions</th></tr></thead>
+              <tbody id="ts-tbody"><tr><td colspan="8" style="text-align:center;padding:40px"><span class="spinner"></span></td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="detail-modal">
+  <div class="modal" style="max-width:700px">
+    <div class="modal-header"><span class="modal-title" id="detail-title">Timesheet Details</span><button class="modal-close" onclick="closeModal('detail-modal')">×</button></div>
+    <div class="modal-body" id="detail-body"></div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script>
+async function loadTs() {
+  try {
+    let ts = await api('GET','/timesheets');
+    const filter = document.getElementById('filter-status').value;
+    if (filter) ts = ts.filter(t=>t.status===filter);
+    const tbody = document.getElementById('ts-tbody');
+    if (!ts.length) { tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><div class="empty-icon"><i class="bx bxs-time-five"></i></div><p>No timesheets found</p></div></td></tr>'; return; }
+    tbody.innerHTML = ts.map(t=>`<tr>
+      <td><strong>${t.userId?.name||'—'}</strong></td>
+      <td>${roleBadge(t.userId?.role||'employee')}</td>
+      <td>${fmtDate(t.weekStart)}</td>
+      <td>${fmtDate(t.weekEnd)}</td>
+      <td><strong>${t.totalHours}h</strong></td>
+      <td style="color:var(--text-muted)">${t.entries.length}</td>
+      <td>${statusBadge(t.status)}</td>
+      <td>
+        <button class="btn btn-ghost btn-sm" onclick="showDetail(${JSON.stringify(t).replace(/"/g,'&quot;')})">View</button>
+        ${t.status==='pending'?`
+          <button class="btn btn-success btn-sm" onclick="act('${t._id}','approve')">✓</button>
+          <button class="btn btn-danger btn-sm" onclick="act('${t._id}','reject')">✗</button>`:''}
+      </td>
+    </tr>`).join('');
+  } catch(e) { toast(e.message,'error'); }
+}
+
+async function act(id, action) {
+  try { await api('PATCH',`/timesheets/${id}/action`,{action}); toast(`Timesheet ${action}d`,'success'); loadTs(); }
+  catch(e) { toast(e.message,'error'); }
+}
+
+function showDetail(t) {
+  document.getElementById('detail-title').textContent = `${t.userId?.name} — Week of ${fmtDate(t.weekStart)}`;
+  document.getElementById('detail-body').innerHTML = `
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px">
+      <span class="badge badge-${t.status}">${t.status}</span>
+      <span style="font-size:13px;color:var(--text-muted)">Total: <strong style="color:var(--text-primary)">${t.totalHours}h</strong></span>
+    </div>
+    <div class="table-wrapper"><table>
+      <thead><tr><th>Date</th><th>Hours</th><th>Type</th><th>Project</th><th>Description</th></tr></thead>
+      <tbody>${t.entries.map(e=>`<tr>
+        <td>${fmtDate(e.date)}</td>
+        <td>${e.hours}h</td>
+        <td style="text-transform:capitalize">${e.workType}</td>
+        <td>${e.project||'—'}</td>
+        <td style="font-size:13px;color:var(--text-secondary)">${e.description||'—'}</td>
+      </tr>`).join('')}</tbody>
+    </table></div>
+    ${t.notes?`<p style="margin-top:12px;font-size:13px;color:var(--text-muted)"><strong>Notes:</strong> ${t.notes}</p>`:''}`;
+  openModal('detail-modal');
+}
+
+loadTs();
+</script>
+</body></html>

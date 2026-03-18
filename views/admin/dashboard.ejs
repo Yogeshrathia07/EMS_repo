@@ -1,0 +1,183 @@
+<%- include('../partials/head', {title: 'Admin Dashboard'}) %>
+<div class="app-layout">
+  <%- include('../partials/sidebar-admin') %>
+  <div class="main-content">
+    <header class="page-header">
+      <div class="flex items-center gap-3">
+        <button class="mobile-menu-btn" onclick="openSidebar()"><i class="bx bx-menu"></i></button>
+        <div>
+          <div class="page-title">Admin Dashboard</div>
+          <div class="page-subtitle" id="header-date"></div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <div class="header-icon-btn"><i class="bx bxs-bell"></i><span class="notif-dot"></span></div>
+        <div class="header-icon-btn" id="admin-avatar" style="font-weight:700;font-size:13px;">A</div>
+      </div>
+    </header>
+    <div class="page-body">
+      <!-- Stats -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon blue"><i class="bx bxs-group"></i></div>
+          <div><div class="stat-value" id="s-employees">—</div><div class="stat-label">Total Employees</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon purple"><i class="bx bxs-user-badge"></i></div>
+          <div><div class="stat-value" id="s-managers">—</div><div class="stat-label">Managers</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon orange"><i class="bx bxs-plane-alt"></i></div>
+          <div><div class="stat-value" id="s-leaves">—</div><div class="stat-label">Pending Leaves</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon teal"><i class="bx bxs-time-five"></i></div>
+          <div><div class="stat-value" id="s-ts">—</div><div class="stat-label">Pending Timesheets</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon green"><i class="bx bxs-wallet"></i></div>
+          <div><div class="stat-value" id="s-salary">—</div><div class="stat-label">Payrolls This Month</div></div>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="quick-actions mb-5" style="grid-template-columns:repeat(6,1fr);">
+        <div class="quick-action" onclick="location.href='/admin/users'">
+          <div class="qa-icon"><i class="bx bxs-user-circle"></i></div><div class="qa-label">Add Employee</div>
+        </div>
+        <div class="quick-action" onclick="location.href='/admin/leaves'">
+          <div class="qa-icon"><i class="bx bxs-plane-alt"></i></div><div class="qa-label">Leaves</div>
+        </div>
+        <div class="quick-action" onclick="location.href='/admin/timesheets'">
+          <div class="qa-icon"><i class="bx bxs-time-five"></i></div><div class="qa-label">Timesheets</div>
+        </div>
+        <div class="quick-action" onclick="location.href='/admin/salary'">
+          <div class="qa-icon"><i class="bx bxs-wallet"></i></div><div class="qa-label">Payroll</div>
+        </div>
+        <div class="quick-action" onclick="location.href='/admin/crm/contacts'">
+          <div class="qa-icon"><i class="bx bxs-notepad"></i></div><div class="qa-label">CRM</div>
+        </div>
+        <div class="quick-action" onclick="location.href='/admin/performance'">
+          <div class="qa-icon"><i class="bx bxs-star"></i></div><div class="qa-label">Performance</div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+        <!-- Pending Leaves -->
+        <div class="card">
+          <div class="card-header">
+            <div><div class="card-title">Pending Leaves</div><div class="card-subtitle">Awaiting your approval</div></div>
+            <a href="/admin/leaves" class="btn btn-ghost btn-sm">View All →</a>
+          </div>
+          <div class="card-body" id="pend-leaves">
+            <div class="empty-state"><div class="empty-icon"><i class="bx bxs-check-circle"></i></div><h3>All clear!</h3><p>No pending leaves</p></div>
+          </div>
+        </div>
+
+        <!-- Pending Timesheets -->
+        <div class="card">
+          <div class="card-header">
+            <div><div class="card-title">Pending Timesheets</div><div class="card-subtitle">Awaiting approval</div></div>
+            <a href="/admin/timesheets" class="btn btn-ghost btn-sm">View All →</a>
+          </div>
+          <div class="card-body" id="pend-ts">
+            <div class="empty-state"><div class="empty-icon"><i class="bx bxs-check-circle"></i></div><h3>All clear!</h3><p>No pending timesheets</p></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Employee List -->
+      <div class="card mt-4">
+        <div class="card-header">
+          <div><div class="card-title">Recent Employees</div><div class="card-subtitle">Latest team members</div></div>
+          <a href="/admin/users" class="btn btn-primary btn-sm">+ Add Employee</a>
+        </div>
+        <div class="card-body" style="padding:0;">
+          <div class="table-wrapper" id="emp-list">
+            <div class="empty-state"><div class="spinner"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script>
+document.getElementById('header-date').textContent = new Date().toLocaleDateString('en-US', {weekday:'long',year:'numeric',month:'long',day:'numeric'});
+const u = getUser();
+if (u) {
+  document.getElementById('sidebar-user-name').textContent = u.name;
+  document.getElementById('sidebar-user-role').textContent = u.role;
+  document.getElementById('sidebar-user-avatar').textContent = u.name.charAt(0);
+  document.getElementById('admin-avatar').textContent = u.name.charAt(0);
+}
+
+async function loadDashboard() {
+  try {
+    const [users, leaves, ts, salaries] = await Promise.all([
+      api('GET','/users'), api('GET','/leaves'), api('GET','/timesheets'), api('GET','/salary')
+    ]);
+    const employees = users.filter(u => u.role === 'employee').length;
+    const managers = users.filter(u => u.role === 'manager').length;
+    const pendLeaves = leaves.filter(l => l.status === 'pending');
+    const pendTs = ts.filter(t => t.status === 'pending');
+    const now = new Date();
+    const moSalaries = salaries.filter(s => s.month === now.getMonth()+1 && s.year === now.getFullYear()).length;
+
+    document.getElementById('s-employees').textContent = employees;
+    document.getElementById('s-managers').textContent = managers;
+    document.getElementById('s-leaves').textContent = pendLeaves.length;
+    document.getElementById('s-ts').textContent = pendTs.length;
+    document.getElementById('s-salary').textContent = moSalaries;
+
+    document.getElementById('pend-leaves').innerHTML = pendLeaves.length ? `
+      <div class="table-wrapper"><table>
+        <thead><tr><th>Employee</th><th>Type</th><th>Days</th><th>Actions</th></tr></thead>
+        <tbody>${pendLeaves.slice(0,5).map(l=>`<tr>
+          <td><strong>${l.userId?.name || '—'}</strong></td>
+          <td style="text-transform:capitalize">${l.type}</td>
+          <td>${l.days}</td>
+          <td class="flex gap-2">
+            <button class="btn btn-success btn-sm" onclick="act('/leaves/${l.id}/action','approve')">✓ Approve</button>
+            <button class="btn btn-danger btn-sm" onclick="act('/leaves/${l.id}/action','reject')">✗</button>
+          </td>
+        </tr>`).join('')}</tbody>
+      </table></div>` : '<div class="empty-state"><div class="empty-icon"><i class="bx bxs-check-circle"></i></div><h3>All clear!</h3><p>No pending leaves</p></div>';
+
+    document.getElementById('pend-ts').innerHTML = pendTs.length ? `
+      <div class="table-wrapper"><table>
+        <thead><tr><th>Employee</th><th>Week</th><th>Hours</th><th>Actions</th></tr></thead>
+        <tbody>${pendTs.slice(0,5).map(t=>`<tr>
+          <td><strong>${t.userId?.name || '—'}</strong></td>
+          <td>${fmtDate(t.weekStart)}</td>
+          <td>${t.totalHours}h</td>
+          <td class="flex gap-2">
+            <button class="btn btn-success btn-sm" onclick="act('/timesheets/${t.id}/action','approve')">✓ Approve</button>
+            <button class="btn btn-danger btn-sm" onclick="act('/timesheets/${t.id}/action','reject')">✗</button>
+          </td>
+        </tr>`).join('')}</tbody>
+      </table></div>` : '<div class="empty-state"><div class="empty-icon"><i class="bx bxs-check-circle"></i></div><h3>All clear!</h3><p>No pending timesheets</p></div>';
+
+    document.getElementById('emp-list').innerHTML = users.length ? `<table>
+      <thead><tr><th>Name</th><th>Email</th><th>Department</th><th>Role</th><th>Status</th></tr></thead>
+      <tbody>${users.slice(0,8).map(u=>`<tr>
+        <td><strong>${u.name}</strong></td>
+        <td>${u.email}</td>
+        <td>${u.department || '—'}</td>
+        <td>${roleBadge(u.role)}</td>
+        <td>${statusBadge(u.status)}</td>
+      </tr>`).join('')}</tbody>
+    </table>` : '<div class="empty-state"><div class="empty-icon"><i class="bx bxs-group"></i></div><h3>No employees yet</h3></div>';
+
+  } catch(e) { toast(e.message,'error'); }
+}
+
+async function act(path, action) {
+  try { await api('PATCH', path, {action}); toast(action + 'd successfully!','success'); loadDashboard(); }
+  catch(e) { toast(e.message,'error'); }
+}
+
+loadDashboard();
+</script>
+</body></html>

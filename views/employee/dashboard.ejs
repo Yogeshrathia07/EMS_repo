@@ -1,0 +1,264 @@
+<%- include('../partials/head', {title: 'Dashboard'}) %>
+<div class="app-layout">
+  <%- include('../partials/sidebar-employee') %>
+  <div class="main-content">
+    <header class="page-header">
+      <div class="flex items-center gap-3">
+        <button class="mobile-menu-btn" onclick="openSidebar()"><i class="bx bx-menu"></i></button>
+        <div>
+          <div class="page-title" id="welcome-title">Good morning! <i class="bx bxs-hand"></i></div>
+          <div class="page-subtitle" id="welcome-date">Loading...</div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <div class="header-date" id="header-date"></div>
+        <div class="header-icon-btn" title="Notifications"><i class="bx bxs-bell"></i><span class="notif-dot"></span></div>
+        <a href="/employee/profile" class="header-icon-btn" title="Profile"><i class="bx bxs-user-circle"></i></a>
+      </div>
+    </header>
+    <div class="page-body">
+      <!-- Stats -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon blue"><i class="bx bxs-time-five"></i></div>
+          <div>
+            <div class="stat-value" id="stat-hours">—</div>
+            <div class="stat-label">Approved Work Hours</div>
+            <div class="stat-trend up" id="stat-hours-trend"></div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon green"><i class="bx bxs-check-circle"></i></div>
+          <div>
+            <div class="stat-value" id="stat-leaves-approved">—</div>
+            <div class="stat-label">Approved Leaves</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon orange">⏳</div>
+          <div>
+            <div class="stat-value" id="stat-ts-pending">—</div>
+            <div class="stat-label">Pending Timesheets</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon purple"><i class="bx bxs-wallet"></i></div>
+          <div>
+            <div class="stat-value" id="stat-salary">—</div>
+            <div class="stat-label">Net Salary This Month</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Grid -->
+      <div style="display:grid;grid-template-columns:1fr 340px;gap:24px;" id="main-grid">
+        <div>
+          <!-- Quick Actions -->
+          <div class="quick-actions" style="grid-template-columns:repeat(4,1fr);">
+            <div class="quick-action" onclick="location.href='/employee/leaves'">
+              <div class="qa-icon"><i class="bx bxs-plane-alt"></i></div>
+              <div class="qa-label">Request Leave</div>
+            </div>
+            <div class="quick-action" onclick="location.href='/employee/timesheets'">
+              <div class="qa-icon"><i class="bx bxs-time-five"></i></div>
+              <div class="qa-label">Log Hours</div>
+            </div>
+            <div class="quick-action" onclick="location.href='/employee/salary'">
+              <div class="qa-icon"><i class="bx bxs-wallet"></i></div>
+              <div class="qa-label">View Payslip</div>
+            </div>
+            <div class="quick-action" onclick="location.href='/employee/documents'">
+              <div class="qa-icon"><i class="bx bxs-file-doc"></i></div>
+              <div class="qa-label">Documents</div>
+            </div>
+          </div>
+
+          <!-- Recent Leaves -->
+          <div class="card mb-5">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Recent Leaves</div>
+                <div class="card-subtitle">Your latest time-off requests</div>
+              </div>
+              <a href="/employee/leaves" class="btn btn-ghost btn-sm">View All →</a>
+            </div>
+            <div class="card-body" id="recent-leaves">
+              <div class="empty-state"><div class="empty-icon"><i class="bx bxs-plane-alt"></i></div><p>No recent leaves</p></div>
+            </div>
+          </div>
+
+          <!-- Recent Timesheets -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Recent Timesheets</div>
+                <div class="card-subtitle">Weekly hour submissions</div>
+              </div>
+              <a href="/employee/timesheets" class="btn btn-ghost btn-sm">View All →</a>
+            </div>
+            <div class="card-body" id="recent-timesheets">
+              <div class="empty-state"><div class="empty-icon"><i class="bx bxs-time-five"></i></div><p>No recent timesheets</p></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column -->
+        <div>
+          <!-- Calendar -->
+          <div class="calendar-widget mb-5">
+            <div class="calendar-header">
+              <div class="calendar-title" id="cal-month">March 2026</div>
+              <div class="cal-nav">
+                <button class="cal-nav-btn" onclick="changeMonth(-1)">‹</button>
+                <button class="cal-nav-btn" onclick="changeMonth(1)">›</button>
+              </div>
+            </div>
+            <div class="cal-grid" id="cal-grid"></div>
+          </div>
+
+          <!-- Upcoming Events -->
+          <div class="events-widget">
+            <div class="card-header">
+              <div class="card-title">Upcoming Events</div>
+              <button class="btn btn-primary btn-sm">+ Add</button>
+            </div>
+            <div class="event-card-item">
+              <div class="event-title"><i class="bx bxs-circle" style="color:var(--purple)"></i> MS Teams Standup</div>
+              <div class="event-time">Today, 9:00 AM – 9:30 AM</div>
+              <div class="event-avatars">
+                <div class="event-avatar">JA</div>
+                <div class="event-avatar">SM</div>
+                <div class="event-avatar">AE</div>
+              </div>
+            </div>
+            <div class="events-list" id="events-list">
+              <div class="event-list-item">
+                <div class="event-dot" style="background:#3b82f6"></div>
+                <div>
+                  <div class="event-list-title">Design Review</div>
+                  <div class="event-list-time">Tomorrow, 10:00 AM</div>
+                </div>
+              </div>
+              <div class="event-list-item">
+                <div class="event-dot" style="background:#10b981"></div>
+                <div>
+                  <div class="event-list-title">Sprint Planning</div>
+                  <div class="event-list-time">Mar 20, 2:00 PM</div>
+                </div>
+              </div>
+              <div class="event-list-item">
+                <div class="event-dot" style="background:#f59e0b"></div>
+                <div>
+                  <div class="event-list-title">Performance Review</div>
+                  <div class="event-list-time">Mar 25, 11:00 AM</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script>
+// Calendar
+let calDate = new Date();
+
+function renderCalendar() {
+  const year = calDate.getFullYear();
+  const month = calDate.getMonth();
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('cal-month').textContent = months[month] + ' ' + year;
+
+  const grid = document.getElementById('cal-grid');
+  const days = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+  let html = days.map(d => `<div class="cal-day-name">${d}</div>`).join('');
+
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const today = new Date();
+
+  for (let i = 0; i < firstDay; i++) {
+    const prevDay = new Date(year, month, -firstDay + i + 1).getDate();
+    html += `<div class="cal-day other-month">${prevDay}</div>`;
+  }
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const isToday = today.getDate() === d && today.getMonth() === month && today.getFullYear() === year;
+    html += `<div class="cal-day${isToday ? ' today' : ''}">${d}</div>`;
+  }
+
+  grid.innerHTML = html;
+}
+
+function changeMonth(dir) {
+  calDate.setMonth(calDate.getMonth() + dir);
+  renderCalendar();
+}
+
+renderCalendar();
+
+// Welcome message
+const hour = new Date().getHours();
+const greet = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+const dateStr = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+document.getElementById('header-date').textContent = dateStr;
+
+async function loadDashboard() {
+  try {
+    const user = getUser();
+    if (user) {
+      document.getElementById('welcome-title').innerHTML = greet + ', ' + user.name.split(' ')[0] + "! <i class="bx bxs-hand"></i>";
+      document.getElementById('sidebar-user-name').textContent = user.name;
+      document.getElementById('sidebar-user-role').textContent = user.role;
+      document.getElementById('sidebar-user-avatar').textContent = user.name.charAt(0).toUpperCase();
+    }
+
+    const [leaves, timesheets, salaries] = await Promise.all([
+      api('GET', '/leaves'), api('GET', '/timesheets'), api('GET', '/salary')
+    ]);
+
+    const approvedHours = timesheets.filter(t => t.status === 'approved').reduce((s, t) => s + t.totalHours, 0);
+    const tsPending = timesheets.filter(t => t.status === 'pending').length;
+    const leavesApproved = leaves.filter(l => l.status === 'approved').length;
+    const now = new Date();
+    const thisMo = salaries.find(s => s.month === now.getMonth() + 1 && s.year === now.getFullYear());
+
+    document.getElementById('stat-hours').textContent = approvedHours.toFixed(1) + 'h';
+    document.getElementById('stat-ts-pending').textContent = tsPending;
+    document.getElementById('stat-leaves-approved').textContent = leavesApproved;
+    document.getElementById('stat-salary').textContent = thisMo ? '$' + Number(thisMo.netSalary).toLocaleString() : '—';
+
+    // Recent leaves table
+    const rl = leaves.slice(0, 5);
+    document.getElementById('recent-leaves').innerHTML = rl.length ? `
+      <div class="table-wrapper"><table>
+        <thead><tr><th>Type</th><th>Start Date</th><th>Days</th><th>Status</th></tr></thead>
+        <tbody>${rl.map(l => `<tr>
+          <td><strong style="text-transform:capitalize">${l.type}</strong></td>
+          <td>${fmtDate(l.startDate)}</td>
+          <td>${l.days} day${l.days !== 1 ? 's' : ''}</td>
+          <td>${statusBadge(l.status)}</td>
+        </tr>`).join('')}</tbody>
+      </table></div>` : '<div class="empty-state"><div class="empty-icon"><i class="bx bxs-plane-alt"></i></div><h3>No leaves yet</h3><p>Request a leave when you need time off</p></div>';
+
+    // Recent timesheets
+    const rt = timesheets.slice(0, 5);
+    document.getElementById('recent-timesheets').innerHTML = rt.length ? `
+      <div class="table-wrapper"><table>
+        <thead><tr><th>Week Starting</th><th>Total Hours</th><th>Status</th></tr></thead>
+        <tbody>${rt.map(t => `<tr>
+          <td><strong>${fmtDate(t.weekStart)}</strong></td>
+          <td>${t.totalHours}h</td>
+          <td>${statusBadge(t.status)}</td>
+        </tr>`).join('')}</tbody>
+      </table></div>` : '<div class="empty-state"><div class="empty-icon"><i class="bx bxs-time-five"></i></div><h3>No timesheets yet</h3><p>Submit your weekly timesheets here</p></div>';
+
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+loadDashboard();
+</script>
+</body></html>

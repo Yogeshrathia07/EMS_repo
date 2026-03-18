@@ -1,0 +1,277 @@
+<%- include('../partials/head', {title: 'Salary Details'}) %>
+<div class="app-layout">
+  <%- include('../partials/sidebar-employee') %>
+  <div class="main-content">
+    <header class="page-header">
+      <div class="flex items-center gap-3">
+        <button class="mobile-menu-btn" onclick="openSidebar()"><i class="bx bx-menu"></i></button>
+        <div>
+          <div class="page-title">Salary Details</div>
+          <div class="page-subtitle">Payroll breakdown & history</div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <select class="form-control" id="salary-filter" onchange="loadSalary()" style="width:160px;padding:8px 12px;">
+          <option value="">All Records</option>
+        </select>
+      </div>
+    </header>
+    <div class="page-body">
+      <!-- Current Month Hero -->
+      <div class="salary-hero" id="salary-hero" style="display:none;">
+        <div style="position:relative;z-index:1;">
+          <div class="salary-hero-label">Net Salary</div>
+          <div class="salary-hero-amount" id="hero-net">$0</div>
+          <div class="salary-hero-month" id="hero-month">Loading...</div>
+          <div style="display:flex;gap:16px;margin-top:16px;flex-wrap:wrap;">
+            <div style="background:rgba(255,255,255,0.12);border-radius:10px;padding:10px 16px;">
+              <div style="font-size:11px;color:rgba(255,255,255,0.6);">Expected Hours</div>
+              <div style="font-size:18px;font-weight:800;" id="hero-exp">—</div>
+            </div>
+            <div style="background:rgba(255,255,255,0.12);border-radius:10px;padding:10px 16px;">
+              <div style="font-size:11px;color:rgba(255,255,255,0.6);">Actual Hours</div>
+              <div style="font-size:18px;font-weight:800;" id="hero-act">—</div>
+            </div>
+            <div style="background:rgba(255,255,255,0.12);border-radius:10px;padding:10px 16px;">
+              <div style="font-size:11px;color:rgba(255,255,255,0.6);">Status</div>
+              <div style="font-size:18px;font-weight:800;" id="hero-status">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Salary Split Breakdown -->
+      <div class="salary-breakdown-grid" id="breakdown-grid" style="display:none;">
+        <!-- Earnings -->
+        <div class="breakdown-card">
+          <div class="breakdown-title">
+            <div class="breakdown-title-dot" style="background:#10b981;"></div>
+            Earnings
+          </div>
+          <div class="breakdown-item">
+            <span class="breakdown-item-label">Base Salary</span>
+            <span class="breakdown-item-value" id="bd-base">$0</span>
+          </div>
+          <div class="breakdown-item">
+            <span class="breakdown-item-label">Allowances</span>
+            <span class="breakdown-item-value green" id="bd-allowances">+$0</span>
+          </div>
+          <div class="breakdown-item">
+            <span class="breakdown-item-label">Overtime Pay</span>
+            <span class="breakdown-item-value green" id="bd-overtime">+$0</span>
+          </div>
+          <div class="breakdown-total">
+            <span>Gross Earnings</span>
+            <span id="bd-gross">$0</span>
+          </div>
+        </div>
+
+        <!-- Deductions -->
+        <div class="breakdown-card">
+          <div class="breakdown-title">
+            <div class="breakdown-title-dot" style="background:#ef4444;"></div>
+            Deductions
+          </div>
+          <div class="breakdown-item">
+            <span class="breakdown-item-label">Tax (estimated)</span>
+            <span class="breakdown-item-value red" id="bd-tax">-$0</span>
+          </div>
+          <div class="breakdown-item">
+            <span class="breakdown-item-label">Other Deductions</span>
+            <span class="breakdown-item-value red" id="bd-deductions">-$0</span>
+          </div>
+          <div class="breakdown-item">
+            <span class="breakdown-item-label">Absent Deduction</span>
+            <span class="breakdown-item-value red" id="bd-absent">-$0</span>
+          </div>
+          <div class="breakdown-total">
+            <span>Total Deductions</span>
+            <span id="bd-total-ded" style="color:#ef4444;">$0</span>
+          </div>
+        </div>
+
+        <!-- Working Hours Breakdown -->
+        <div class="breakdown-card">
+          <div class="breakdown-title">
+            <div class="breakdown-title-dot" style="background:#3b82f6;"></div>
+            Working Hours
+          </div>
+          <div class="breakdown-item">
+            <span class="breakdown-item-label">Expected Hours</span>
+            <span class="breakdown-item-value" id="bd-exp-hrs">0h</span>
+          </div>
+          <div class="breakdown-item">
+            <span class="breakdown-item-label">Actual Hours</span>
+            <span class="breakdown-item-value" id="bd-act-hrs">0h</span>
+          </div>
+          <div class="breakdown-item">
+            <span class="breakdown-item-label">Overtime Hours</span>
+            <span class="breakdown-item-value green" id="bd-ot-hrs">0h</span>
+          </div>
+          <div class="breakdown-item" style="margin-top:8px;">
+            <span class="breakdown-item-label">Attendance Rate</span>
+            <span class="breakdown-item-value" id="bd-attend">0%</span>
+          </div>
+          <div class="progress-bar-wrap mt-2">
+            <div class="progress-bar-fill" id="bd-attend-bar" style="width:0%"></div>
+          </div>
+        </div>
+
+        <!-- Net Pay -->
+        <div class="breakdown-card" style="background:linear-gradient(135deg,#1a2b4a,#1d4ed8);color:white;border:none;">
+          <div class="breakdown-title" style="color:rgba(255,255,255,0.6);">
+            <div class="breakdown-title-dot" style="background:white;"></div>
+            Summary
+          </div>
+          <div style="text-align:center;padding:20px 0;">
+            <div style="font-size:13px;color:rgba(255,255,255,0.6);margin-bottom:8px;">Take Home Pay</div>
+            <div style="font-size:42px;font-weight:900;letter-spacing:-2px;" id="bd-net">$0</div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:4px;" id="bd-period">—</div>
+          </div>
+          <div style="border-top:1px solid rgba(255,255,255,0.15);padding-top:12px;margin-top:8px;">
+            <div class="breakdown-item" style="border:none;color:rgba(255,255,255,0.7);">
+              <span>Hourly Rate</span>
+              <span id="bd-hourly" style="color:white;font-weight:700;">$0/hr</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- All Records Table -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Salary History</div>
+            <div class="card-subtitle">All your payroll records</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="printPayslip()">🖨️ Print Payslip</button>
+        </div>
+        <div style="padding:0;">
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Period</th>
+                  <th>Base Salary</th>
+                  <th>Allowances</th>
+                  <th>Deductions</th>
+                  <th>Overtime</th>
+                  <th>Hours (Act/Exp)</th>
+                  <th>Net Salary</th>
+                  <th>Status</th>
+                  <th>Paid On</th>
+                </tr>
+              </thead>
+              <tbody id="salary-tbody">
+                <tr><td colspan="9" style="text-align:center;padding:40px"><span class="spinner"></span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script>
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+let allSalaries = [];
+
+function fmt(n) { return '$' + Number(n||0).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2}); }
+
+function showBreakdown(s) {
+  const gross = (s.baseSalary||0) + (s.allowances||0) + (s.overtime * (s.overtimeRate||1.5) * ((s.baseSalary||0)/(s.expectedHours||160)));
+  const absent = s.actualHours < s.expectedHours
+    ? ((s.expectedHours - s.actualHours) * (s.baseSalary / s.expectedHours)).toFixed(2)
+    : 0;
+  const totalDed = (s.deductions||0) + Number(absent);
+  const attendRate = s.expectedHours > 0 ? Math.min(100, Math.round((s.actualHours / s.expectedHours) * 100)) : 0;
+  const hourlyRate = s.actualHours > 0 ? (s.baseSalary / s.expectedHours).toFixed(2) : 0;
+
+  document.getElementById('salary-hero').style.display = '';
+  document.getElementById('breakdown-grid').style.display = '';
+
+  document.getElementById('hero-net').textContent = fmt(s.netSalary);
+  document.getElementById('hero-month').textContent = MONTHS[s.month-1] + ' ' + s.year;
+  document.getElementById('hero-exp').textContent = (s.expectedHours||0) + 'h';
+  document.getElementById('hero-act').textContent = (s.actualHours||0) + 'h';
+  document.getElementById('hero-status').textContent = s.status.toUpperCase();
+
+  document.getElementById('bd-base').textContent = fmt(s.baseSalary);
+  document.getElementById('bd-allowances').textContent = '+' + fmt(s.allowances);
+  document.getElementById('bd-overtime').textContent = '+' + fmt(s.overtime * (s.overtimeRate||1.5));
+  document.getElementById('bd-gross').textContent = fmt(gross);
+
+  document.getElementById('bd-tax').textContent = '-' + fmt((s.netSalary||0) * 0.05);
+  document.getElementById('bd-deductions').textContent = '-' + fmt(s.deductions);
+  document.getElementById('bd-absent').textContent = '-' + fmt(absent);
+  document.getElementById('bd-total-ded').textContent = '-' + fmt(totalDed);
+
+  document.getElementById('bd-exp-hrs').textContent = (s.expectedHours||0) + 'h';
+  document.getElementById('bd-act-hrs').textContent = (s.actualHours||0) + 'h';
+  document.getElementById('bd-ot-hrs').textContent = (s.overtime||0) + 'h';
+  document.getElementById('bd-attend').textContent = attendRate + '%';
+  document.getElementById('bd-attend-bar').style.width = attendRate + '%';
+  document.getElementById('bd-attend-bar').className = 'progress-bar-fill' + (attendRate >= 90 ? ' green' : attendRate >= 70 ? '' : ' red');
+
+  document.getElementById('bd-net').textContent = fmt(s.netSalary);
+  document.getElementById('bd-period').textContent = MONTHS[s.month-1] + ' ' + s.year;
+  document.getElementById('bd-hourly').textContent = '$' + hourlyRate + '/hr';
+}
+
+async function loadSalary() {
+  try {
+    const salaries = await api('GET', '/salary');
+    allSalaries = salaries;
+    const tbody = document.getElementById('salary-tbody');
+
+    // Populate filter
+    const filter = document.getElementById('salary-filter');
+    filter.innerHTML = '<option value="">All Records</option>' + salaries.map(s =>
+      `<option value="${s.id}">${MONTHS[s.month-1]} ${s.year}</option>`
+    ).join('');
+
+    if (!salaries.length) {
+      tbody.innerHTML = '<tr><td colspan="9"><div class="empty-state"><div class="empty-icon"><i class="bx bxs-wallet"></i></div><h3>No salary records yet</h3><p>Your payroll will appear here once processed</p></div></td></tr>';
+      return;
+    }
+
+    // Show latest breakdown
+    const now = new Date();
+    const latest = salaries.find(s => s.month === now.getMonth()+1 && s.year === now.getFullYear()) || salaries[0];
+    if (latest) showBreakdown(latest);
+
+    tbody.innerHTML = salaries.map(s => `<tr onclick="showBreakdown(${JSON.stringify(s).replace(/"/g,'&quot;')})" style="cursor:pointer;">
+      <td><strong>${MONTHS[s.month-1]} ${s.year}</strong></td>
+      <td>${fmt(s.baseSalary)}</td>
+      <td class="text-success">+${fmt(s.allowances)}</td>
+      <td class="text-danger">-${fmt(s.deductions)}</td>
+      <td>${s.overtime}h @ ${s.overtimeRate}x</td>
+      <td>${s.actualHours}h / ${s.expectedHours}h
+        <div class="progress-bar-wrap mt-2" style="width:80px">
+          <div class="progress-bar-fill ${s.actualHours>=s.expectedHours?'green':''}" style="width:${Math.min(100,Math.round(s.actualHours/s.expectedHours*100))}%"></div>
+        </div>
+      </td>
+      <td><strong class="text-accent">${fmt(s.netSalary)}</strong></td>
+      <td>${statusBadge(s.status)}</td>
+      <td class="text-sm text-muted">${s.paidAt ? fmtDate(s.paidAt) : '—'}</td>
+    </tr>`).join('');
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+function printPayslip() {
+  window.print();
+}
+
+// User info
+const u = getUser();
+if (u) {
+  document.getElementById('sidebar-user-name').textContent = u.name;
+  document.getElementById('sidebar-user-role').textContent = u.role;
+  document.getElementById('sidebar-user-avatar').textContent = u.name.charAt(0);
+}
+
+loadSalary();
+</script>
+</body></html>

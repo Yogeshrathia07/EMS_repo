@@ -1,0 +1,214 @@
+<%- include('../partials/head', {title: 'Employees'}) %>
+<div class="app-layout">
+  <%- include('../partials/sidebar-admin') %>
+  <div class="main-content">
+    <header class="page-header">
+      <div class="flex items-center gap-3">
+        <button class="mobile-menu-btn" onclick="openSidebar()"><i class="bx bx-menu"></i></button>
+        <div><div class="page-title">Employees</div><div class="page-subtitle">Manage your team members</div></div>
+      </div>
+      <div class="header-actions">
+        <div class="search-bar" style="width:220px;">
+          <span class="search-icon">🔍</span>
+          <input type="text" placeholder="Search users..." id="search-input" oninput="filterUsers()">
+        </div>
+        <button class="btn btn-primary" onclick="openCreateModal()">＋ Add Employee</button>
+      </div>
+    </header>
+    <div class="page-body">
+      <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);">
+        <div class="stat-card"><div class="stat-icon blue"><i class="bx bxs-group"></i></div><div><div class="stat-value" id="s-total">—</div><div class="stat-label">Total Staff</div></div></div>
+        <div class="stat-card"><div class="stat-icon purple"><i class="bx bxs-user-badge"></i></div><div><div class="stat-value" id="s-mgrs">—</div><div class="stat-label">Managers</div></div></div>
+        <div class="stat-card"><div class="stat-icon green"><i class="bx bxs-check-circle"></i></div><div><div class="stat-value" id="s-active">—</div><div class="stat-label">Active</div></div></div>
+        <div class="stat-card"><div class="stat-icon red">🔴</div><div><div class="stat-value" id="s-inactive">—</div><div class="stat-label">Inactive</div></div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div><div class="card-title">All Employees</div></div>
+          <div class="toggle-group mb-0">
+            <button class="toggle-btn active" id="f-all" onclick="setRoleFilter('all',this)">All</button>
+            <button class="toggle-btn" id="f-emp" onclick="setRoleFilter('employee',this)">Employees</button>
+            <button class="toggle-btn" id="f-mgr" onclick="setRoleFilter('manager',this)">Managers</button>
+          </div>
+        </div>
+        <div style="padding:0;">
+          <div class="table-wrapper">
+            <table>
+              <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Department</th><th>Manager</th><th>Salary</th><th>Status</th><th>Actions</th></tr></thead>
+              <tbody id="users-tbody"><tr><td colspan="8" style="text-align:center;padding:40px"><span class="spinner"></span></td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- User Modal -->
+<div class="modal-overlay" id="user-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-title">Add Employee</span>
+      <button class="modal-close" onclick="closeModal('user-modal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Full Name</label><input type="text" id="u-name" class="form-control" placeholder="John Doe"></div>
+        <div class="form-group"><label class="form-label">Email</label><input type="email" id="u-email" class="form-control" placeholder="john@company.com"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Role</label>
+          <select id="u-role" class="form-control" onchange="toggleManagerField()">
+            <option value="employee">Employee</option>
+            <option value="manager">Manager</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Department</label><input type="text" id="u-dept" class="form-control" placeholder="Engineering"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Phone</label><input type="text" id="u-phone" class="form-control" placeholder="+1 555 0000"></div>
+        <div class="form-group"><label class="form-label">Base Salary ($)</label><input type="number" id="u-salary" class="form-control" min="0" placeholder="5000"></div>
+      </div>
+      <div class="form-group" id="manager-field">
+        <label class="form-label">Assign Manager</label>
+        <select id="u-manager" class="form-control"><option value="">— No Manager —</option></select>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Password <span class="text-muted">(default: Admin@123)</span></label><input type="password" id="u-pass" class="form-control" placeholder="Leave blank for default"></div>
+        <div class="form-group"><label class="form-label">Status</label>
+          <select id="u-status" class="form-control"><option value="active">Active</option><option value="inactive">Inactive</option></select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('user-modal')">Cancel</button>
+      <button class="btn btn-primary" id="save-user-btn" onclick="saveUser()">Save Employee</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script>
+let editId = null, managers = [], allUsers = [], roleFilter = 'all', searchQ = '';
+
+function toggleManagerField() {
+  document.getElementById('manager-field').style.display = document.getElementById('u-role').value === 'employee' ? '' : 'none';
+}
+
+function setRoleFilter(role, btn) {
+  roleFilter = role;
+  document.querySelectorAll('.toggle-group .toggle-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderUsers();
+}
+
+function filterUsers() {
+  searchQ = document.getElementById('search-input').value.toLowerCase();
+  renderUsers();
+}
+
+function renderUsers() {
+  let data = allUsers;
+  if (roleFilter !== 'all') data = data.filter(u=>u.role===roleFilter);
+  if (searchQ) data = data.filter(u=>u.name.toLowerCase().includes(searchQ)||u.email.toLowerCase().includes(searchQ));
+
+  document.getElementById('s-total').textContent = allUsers.length;
+  document.getElementById('s-mgrs').textContent = allUsers.filter(u=>u.role==='manager').length;
+  document.getElementById('s-active').textContent = allUsers.filter(u=>u.status==='active').length;
+  document.getElementById('s-inactive').textContent = allUsers.filter(u=>u.status==='inactive').length;
+
+  const tbody = document.getElementById('users-tbody');
+  if (!data.length) {
+    tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><div class="empty-icon"><i class="bx bxs-group"></i></div><h3>No employees found</h3></div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = data.map(u=>`<tr>
+    <td><strong>${u.name}</strong></td>
+    <td class="text-sm">${u.email}</td>
+    <td>${roleBadge(u.role)}</td>
+    <td>${u.department || '—'}</td>
+    <td class="text-sm">${u.managerId?.name || '—'}</td>
+    <td>$${(u.baseSalary||0).toLocaleString()}</td>
+    <td>${statusBadge(u.status)}</td>
+    <td class="flex gap-2">
+      <button class="btn btn-ghost btn-sm" onclick="editUser('${u.id}')">✏️ Edit</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteUser('${u.id}')">🗑️</button>
+    </td>
+  </tr>`).join('');
+}
+
+async function loadUsers() {
+  try {
+    const users = await api('GET','/users');
+    allUsers = users;
+    managers = users.filter(u => u.role === 'manager');
+    document.getElementById('u-manager').innerHTML = '<option value="">— No Manager —</option>' + managers.map(m=>`<option value="${m.id}">${m.name}</option>`).join('');
+    renderUsers();
+  } catch(e) { toast(e.message,'error'); }
+}
+
+function openCreateModal() {
+  editId = null;
+  document.getElementById('modal-title').textContent = 'Add Employee';
+  ['u-name','u-email','u-dept','u-phone','u-pass'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('u-role').value = 'employee';
+  document.getElementById('u-salary').value = '';
+  document.getElementById('u-status').value = 'active';
+  document.getElementById('u-manager').value = '';
+  toggleManagerField();
+  openModal('user-modal');
+}
+
+async function editUser(id) {
+  try {
+    const u = allUsers.find(x=>x.id==id||x.id==id);
+    if (!u) return;
+    editId = id;
+    document.getElementById('modal-title').textContent = 'Edit Employee';
+    document.getElementById('u-name').value = u.name;
+    document.getElementById('u-email').value = u.email;
+    document.getElementById('u-role').value = u.role;
+    document.getElementById('u-dept').value = u.department||'';
+    document.getElementById('u-phone').value = u.phone||'';
+    document.getElementById('u-salary').value = u.baseSalary||'';
+    document.getElementById('u-status').value = u.status;
+    document.getElementById('u-manager').value = u.managerId?.id||'';
+    document.getElementById('u-pass').value = '';
+    toggleManagerField();
+    openModal('user-modal');
+  } catch(e) { toast(e.message,'error'); }
+}
+
+async function saveUser() {
+  const body = {
+    name: document.getElementById('u-name').value,
+    email: document.getElementById('u-email').value,
+    role: document.getElementById('u-role').value,
+    department: document.getElementById('u-dept').value,
+    phone: document.getElementById('u-phone').value,
+    baseSalary: parseFloat(document.getElementById('u-salary').value)||0,
+    status: document.getElementById('u-status').value,
+    managerId: document.getElementById('u-manager').value||null,
+  };
+  const pass = document.getElementById('u-pass').value;
+  if (pass) body.password = pass;
+  try {
+    if (editId) await api('PUT',`/users/${editId}`,body);
+    else await api('POST','/users',body);
+    toast(editId?'Employee updated!':'Employee added!','success');
+    closeModal('user-modal');
+    loadUsers();
+  } catch(e) { toast(e.message,'error'); }
+}
+
+async function deleteUser(id) {
+  if (!confirm('Delete this employee? This cannot be undone.')) return;
+  try { await api('DELETE',`/users/${id}`); toast('Employee deleted','success'); loadUsers(); }
+  catch(e) { toast(e.message,'error'); }
+}
+
+loadUsers();
+</script>
+</body></html>

@@ -1,0 +1,88 @@
+<%- include('../partials/head', {title: 'Documents'}) %>
+<div class="app-layout">
+  <%- include('../partials/sidebar-employee') %>
+  <div class="main-content">
+    <header class="page-header">
+      <div class="flex items-center gap-3">
+        <button class="mobile-menu-btn" onclick="openSidebar()"><i class="bx bx-menu"></i></button>
+        <div><div class="page-title">Documents</div><div class="page-subtitle">Your HR documents & contracts</div></div>
+      </div>
+    </header>
+    <div class="page-body">
+      <div class="grid-2" id="docs-grid">
+        <div class="doc-card">
+          <div class="doc-icon" style="background:#eff6ff;"><i class="bx bxs-file-doc"></i></div>
+          <div style="flex:1;">
+            <div class="doc-name">Employment Contract</div>
+            <div class="doc-meta">PDF · Added on joining date · 245 KB</div>
+          </div>
+          <div class="doc-actions">
+            <button class="btn btn-ghost btn-sm">👁 View</button>
+            <button class="btn btn-primary btn-sm">⬇ Download</button>
+          </div>
+        </div>
+        <div class="doc-card">
+          <div class="doc-icon" style="background:#ecfdf5;"><i class="bx bxs-notepad"></i></div>
+          <div style="flex:1;">
+            <div class="doc-name">Offer Letter</div>
+            <div class="doc-meta">PDF · Signed · 124 KB</div>
+          </div>
+          <div class="doc-actions">
+            <button class="btn btn-ghost btn-sm">👁 View</button>
+            <button class="btn btn-primary btn-sm">⬇ Download</button>
+          </div>
+        </div>
+        <div class="doc-card">
+          <div class="doc-icon" style="background:#fffbeb;"><i class="bx bxs-bar-chart-square"></i></div>
+          <div style="flex:1;">
+            <div class="doc-name">Last Payslip</div>
+            <div class="doc-meta">PDF · March 2026 · 98 KB</div>
+          </div>
+          <div class="doc-actions">
+            <button class="btn btn-ghost btn-sm">👁 View</button>
+            <button class="btn btn-primary btn-sm">⬇ Download</button>
+          </div>
+        </div>
+        <div class="doc-card">
+          <div class="doc-icon" style="background:#f5f3ff;">🔏</div>
+          <div style="flex:1;">
+            <div class="doc-name">NDA Agreement</div>
+            <div class="doc-meta">PDF · Signed · 187 KB</div>
+          </div>
+          <div class="doc-actions">
+            <button class="btn btn-ghost btn-sm">👁 View</button>
+            <button class="btn btn-primary btn-sm">⬇ Download</button>
+          </div>
+        </div>
+        <div class="doc-card">
+          <div class="doc-icon" style="background:#ecfeff;"><i class="bx bxs-first-aid"></i></div>
+          <div style="flex:1;">
+            <div class="doc-name">Health Insurance Card</div>
+            <div class="doc-meta">PDF · 2026 policy · 56 KB</div>
+          </div>
+          <div class="doc-actions">
+            <button class="btn btn-ghost btn-sm">👁 View</button>
+            <button class="btn btn-primary btn-sm">⬇ Download</button>
+          </div>
+        </div>
+        <div class="doc-card" style="border:2px dashed var(--border);box-shadow:none;cursor:pointer;" onclick="toast('File upload coming soon!','info')">
+          <div class="doc-icon" style="background:var(--bg-input);">📤</div>
+          <div style="flex:1;">
+            <div class="doc-name" style="color:var(--text-muted);">Upload New Document</div>
+            <div class="doc-meta">Click to upload PDF, DOC, or image</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="/js/api.js"></script>
+<script>
+const u = getUser();
+if (u) {
+  document.getElementById('sidebar-user-name').textContent = u.name;
+  document.getElementById('sidebar-user-role').textContent = u.role;
+  document.getElementById('sidebar-user-avatar').textContent = u.name.charAt(0);
+}
+</script>
+</body></html>

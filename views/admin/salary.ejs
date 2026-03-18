@@ -1,0 +1,205 @@
+<%- include\('../partials/head', {title: 'Salary — Admin'}) %>
+<div class="app-layout">
+  <%- include\('../partials/sidebar-admin') %>
+  <div class="main-content">
+    <header class="page-header">
+        <button class="mobile-menu-btn" onclick="openSidebar()"><i class="bx bx-menu"></i></button>
+      <div><div class="page-title"><i class="bx bxs-wallet"></i> Salary Management</div><div class="page-subtitle">Generate, finalize and pay salaries</div></div>
+      <div class="header-actions">
+        <button class="btn btn-primary" onclick="openModal('gen-modal')">＋ Generate Salary</button>
+      </div>
+    </header>
+    <div class="page-body">
+      <div style="display:flex;gap:12px;margin-bottom:24px;align-items:center;flex-wrap:wrap">
+        <select id="f-month" class="form-control" style="width:140px" onchange="loadSalaries()">
+          <option value="">All Months</option>
+          ${['January','February','March','April','May','June','July','August','September','October','November','December'].map((m,i)=>`<option value="${i+1}">${m}</option>`).join('')}
+        </select>
+        <input type="number" id="f-year" class="form-control" style="width:100px" placeholder="Year" onchange="loadSalaries()">
+        <select id="f-status" class="form-control" style="width:130px" onchange="loadSalaries()">
+          <option value="">All Status</option>
+          <option value="draft">Draft</option>
+          <option value="finalized">Finalized</option>
+          <option value="paid">Paid</option>
+        </select>
+      </div>
+
+      <div class="card">
+        <div class="card-body">
+          <div class="table-wrapper">
+            <table>
+              <thead><tr><th>Employee</th><th>Month/Year</th><th>Base</th><th>Allowances</th><th>Deductions</th><th>Overtime</th><th>Net Salary</th><th>Hours</th><th>Status</th><th>Actions</th></tr></thead>
+              <tbody id="salary-tbody"><tr><td colspan="10" style="text-align:center;padding:40px"><span class="spinner"></span></td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Generate Salary Modal -->
+<div class="modal-overlay" id="gen-modal">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title" id="gen-title">Generate Salary Record</span><button class="modal-close" onclick="closeModal('gen-modal')">×</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Employee</label><select id="g-user" class="form-control"><option value="">Select employee...</option></select></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Month</label>
+          <select id="g-month" class="form-control">
+            ${['January','February','March','April','May','June','July','August','September','October','November','December'].map((m,i)=>`<option value="${i+1}">${m}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Year</label><input type="number" id="g-year" class="form-control" value="${new Date().getFullYear()}"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Base Salary ($)</label><input type="number" id="g-base" class="form-control" min="0"></div>
+        <div class="form-group"><label class="form-label">Expected Hours</label><input type="number" id="g-exphrs" class="form-control" value="160"></div>
+      </div>
+      <div class="form-row three">
+        <div class="form-group"><label class="form-label">Allowances ($)</label><input type="number" id="g-allow" class="form-control" value="0" min="0"></div>
+        <div class="form-group"><label class="form-label">Deductions ($)</label><input type="number" id="g-ded" class="form-control" value="0" min="0"></div>
+        <div class="form-group"><label class="form-label">Overtime (hrs)</label><input type="number" id="g-ot" class="form-control" value="0" min="0"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Notes</label><textarea id="g-notes" class="form-control" rows="2"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('gen-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="genSalary()">Generate</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Salary Modal -->
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title">Edit Salary Record</span><button class="modal-close" onclick="closeModal('edit-modal')">×</button></div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Base Salary ($)</label><input type="number" id="e-base" class="form-control"></div>
+        <div class="form-group"><label class="form-label">Expected Hours</label><input type="number" id="e-exphrs" class="form-control"></div>
+      </div>
+      <div class="form-row three">
+        <div class="form-group"><label class="form-label">Allowances ($)</label><input type="number" id="e-allow" class="form-control"></div>
+        <div class="form-group"><label class="form-label">Deductions ($)</label><input type="number" id="e-ded" class="form-control"></div>
+        <div class="form-group"><label class="form-label">Overtime (hrs)</label><input type="number" id="e-ot" class="form-control"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Status</label>
+          <select id="e-status" class="form-control"><option value="draft">Draft</option><option value="finalized">Finalized</option></select>
+        </div>
+        <div class="form-group"><label class="form-label">Notes</label><input type="text" id="e-notes" class="form-control"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('edit-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="updateSalary()">Update</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script>
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+let editSalId = null;
+
+async function loadUsers() {
+  try {
+    const users = await api('GET','/users');
+    const sel = document.getElementById('g-user');
+    sel.innerHTML = '<option value="">Select employee...</option>' + users.map(u=>`<option value="${u._id}" data-salary="${u.baseSalary||0}">${u.name} (${u.role})</option>`).join('');
+    sel.onchange = function() {
+      const opt = this.options[this.selectedIndex];
+      if (opt.dataset.salary) document.getElementById('g-base').value = opt.dataset.salary;
+    };
+  } catch(e) {}
+}
+
+async function loadSalaries() {
+  try {
+    let params = [];
+    const month = document.getElementById('f-month').value;
+    const year = document.getElementById('f-year').value;
+    const status = document.getElementById('f-status').value;
+    if (month) params.push(`month=${month}`);
+    if (year) params.push(`year=${year}`);
+    let salaries = await api('GET', '/salary' + (params.length?'?'+params.join('&'):''));
+    if (status) salaries = salaries.filter(s=>s.status===status);
+
+    const tbody = document.getElementById('salary-tbody');
+    if (!salaries.length) { tbody.innerHTML = '<tr><td colspan="10"><div class="empty-state"><div class="empty-icon"><i class="bx bxs-wallet"></i></div><p>No salary records found</p></div></td></tr>'; return; }
+    tbody.innerHTML = salaries.map(s=>`<tr>
+      <td><strong>${s.userId?.name}</strong><br><span style="font-size:11px;color:var(--text-muted)">${s.userId?.role}</span></td>
+      <td>${MONTHS[s.month-1]} ${s.year}</td>
+      <td>$${s.baseSalary.toLocaleString()}</td>
+      <td style="color:var(--success)">+$${s.allowances.toLocaleString()}</td>
+      <td style="color:var(--danger)">-$${s.deductions.toLocaleString()}</td>
+      <td>${s.overtime}h</td>
+      <td><strong style="color:var(--info)">$${s.netSalary.toLocaleString()}</strong></td>
+      <td style="font-size:13px">${s.actualHours}/${s.expectedHours}h</td>
+      <td>${statusBadge(s.status)}</td>
+      <td style="display:flex;gap:6px;flex-wrap:wrap">
+        ${s.status!=='paid'?`<button class="btn btn-ghost btn-sm" onclick="openEdit('${s._id}')">Edit</button>`:''}
+        ${s.status==='finalized'?`<button class="btn btn-success btn-sm" onclick="pay('${s._id}')"><i class="bx bxs-wallet"></i> Pay</button>`:''}
+        ${s.status!=='paid'?`<button class="btn btn-danger btn-sm" onclick="delSal('${s._id}')">Del</button>`:''}
+      </td>
+    </tr>`).join('');
+  } catch(e) { toast(e.message,'error'); }
+}
+
+async function genSalary() {
+  const body = {
+    userId: document.getElementById('g-user').value,
+    month: document.getElementById('g-month').value,
+    year: document.getElementById('g-year').value,
+    baseSalary: parseFloat(document.getElementById('g-base').value)||0,
+    expectedHours: parseFloat(document.getElementById('g-exphrs').value)||160,
+    allowances: parseFloat(document.getElementById('g-allow').value)||0,
+    deductions: parseFloat(document.getElementById('g-ded').value)||0,
+    overtime: parseFloat(document.getElementById('g-ot').value)||0,
+    notes: document.getElementById('g-notes').value,
+  };
+  if (!body.userId) return toast('Select an employee','error');
+  try { await api('POST','/salary',body); toast('Salary record generated!','success'); closeModal('gen-modal'); loadSalaries(); }
+  catch(e) { toast(e.message,'error'); }
+}
+
+async function openEdit(id) {
+  try {
+    const salaries = await api('GET','/salary');
+    const s = salaries.find(x=>x._id===id);
+    if (!s) return;
+    editSalId = id;
+    document.getElementById('e-base').value = s.baseSalary;
+    document.getElementById('e-exphrs').value = s.expectedHours;
+    document.getElementById('e-allow').value = s.allowances;
+    document.getElementById('e-ded').value = s.deductions;
+    document.getElementById('e-ot').value = s.overtime;
+    document.getElementById('e-status').value = s.status;
+    document.getElementById('e-notes').value = s.notes||'';
+    openModal('edit-modal');
+  } catch(e) { toast(e.message,'error'); }
+}
+
+async function updateSalary() {
+  const body = { baseSalary: parseFloat(document.getElementById('e-base').value)||0, expectedHours: parseFloat(document.getElementById('e-exphrs').value)||160, allowances: parseFloat(document.getElementById('e-allow').value)||0, deductions: parseFloat(document.getElementById('e-ded').value)||0, overtime: parseFloat(document.getElementById('e-ot').value)||0, status: document.getElementById('e-status').value, notes: document.getElementById('e-notes').value };
+  try { await api('PUT',`/salary/${editSalId}`,body); toast('Salary updated','success'); closeModal('edit-modal'); loadSalaries(); }
+  catch(e) { toast(e.message,'error'); }
+}
+
+async function pay(id) {
+  if (!confirm('Mark this salary as paid?')) return;
+  try { await api('PATCH',`/salary/${id}/pay`); toast('Salary marked as paid!','success'); loadSalaries(); }
+  catch(e) { toast(e.message,'error'); }
+}
+
+async function delSal(id) {
+  if (!confirm('Delete this salary record?')) return;
+  try { await api('DELETE',`/salary/${id}`); toast('Deleted','success'); loadSalaries(); }
+  catch(e) { toast(e.message,'error'); }
+}
+
+loadUsers();
+loadSalaries();
+</script>
+</body></html>

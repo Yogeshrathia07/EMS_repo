@@ -1,0 +1,96 @@
+<%- include('../partials/head', {title: 'Training'}) %>
+<div class="app-layout">
+  <%- include('../partials/sidebar-employee') %>
+  <div class="main-content">
+    <header class="page-header">
+      <div class="flex items-center gap-3">
+        <button class="mobile-menu-btn" onclick="openSidebar()"><i class="bx bx-menu"></i></button>
+        <div><div class="page-title">Training & Development</div><div class="page-subtitle">Your learning journey</div></div>
+      </div>
+    </header>
+    <div class="page-body">
+      <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:24px;">
+        <div class="stat-card"><div class="stat-icon blue"><i class="bx bxs-graduation"></i></div><div><div class="stat-value">3</div><div class="stat-label">Completed</div></div></div>
+        <div class="stat-card"><div class="stat-icon orange">⏳</div><div><div class="stat-value">2</div><div class="stat-label">In Progress</div></div></div>
+        <div class="stat-card"><div class="stat-icon green"><i class="bx bxs-star"></i></div><div><div class="stat-value">24h</div><div class="stat-label">Learning Hours</div></div></div>
+        <div class="stat-card"><div class="stat-icon purple"><i class="bx bxs-trophy"></i></div><div><div class="stat-value">2</div><div class="stat-label">Certificates</div></div></div>
+      </div>
+
+      <div class="grid-3">
+        <div class="training-card">
+          <div class="training-thumb"><i class="bx bxs-lock"></i></div>
+          <div class="training-body">
+            <div class="training-title">Security Awareness Training</div>
+            <div class="training-meta">Required · 2h · Due Mar 31</div>
+            <div class="progress-bar-wrap mt-2"><div class="progress-bar-fill green" style="width:100%"></div></div>
+            <div style="margin-top:6px;display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);">
+              <span>Completed</span><span>100%</span>
+            </div>
+          </div>
+        </div>
+        <div class="training-card">
+          <div class="training-thumb" style="background:linear-gradient(135deg,#10b981,#059669);"><i class="bx bxs-bar-chart-square"></i></div>
+          <div class="training-body">
+            <div class="training-title">Data Privacy & GDPR</div>
+            <div class="training-meta">Required · 3h · Due Apr 15</div>
+            <div class="progress-bar-wrap mt-2"><div class="progress-bar-fill" style="width:60%"></div></div>
+            <div style="margin-top:6px;display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);">
+              <span>In Progress</span><span>60%</span>
+            </div>
+          </div>
+        </div>
+        <div class="training-card">
+          <div class="training-thumb" style="background:linear-gradient(135deg,#f59e0b,#d97706);">🤝</div>
+          <div class="training-body">
+            <div class="training-title">Leadership Fundamentals</div>
+            <div class="training-meta">Optional · 5h</div>
+            <div class="progress-bar-wrap mt-2"><div class="progress-bar-fill orange" style="width:30%"></div></div>
+            <div style="margin-top:6px;display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);">
+              <span>In Progress</span><span>30%</span>
+            </div>
+          </div>
+        </div>
+        <div class="training-card">
+          <div class="training-thumb" style="background:linear-gradient(135deg,#06b6d4,#0891b2);">💻</div>
+          <div class="training-body">
+            <div class="training-title">Advanced JavaScript</div>
+            <div class="training-meta">Elective · 8h</div>
+            <div class="progress-bar-wrap mt-2"><div class="progress-bar-fill green" style="width:100%"></div></div>
+            <div style="margin-top:6px;display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);">
+              <span>Completed · <i class="bx bxs-trophy"></i> Certified</span><span>100%</span>
+            </div>
+          </div>
+        </div>
+        <div class="training-card">
+          <div class="training-thumb" style="background:linear-gradient(135deg,#ec4899,#db2777);">📣</div>
+          <div class="training-body">
+            <div class="training-title">Effective Communication</div>
+            <div class="training-meta">Required · 4h</div>
+            <div class="progress-bar-wrap mt-2"><div class="progress-bar-fill green" style="width:100%"></div></div>
+            <div style="margin-top:6px;display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);">
+              <span>Completed · <i class="bx bxs-trophy"></i> Certified</span><span>100%</span>
+            </div>
+          </div>
+        </div>
+        <div class="training-card" style="border:2px dashed var(--border);box-shadow:none;">
+          <div class="training-thumb" style="background:var(--bg-input);">➕</div>
+          <div class="training-body">
+            <div class="training-title" style="color:var(--text-muted);">Browse More Courses</div>
+            <div class="training-meta">Explore learning library</div>
+            <button class="btn btn-outline btn-sm mt-3" onclick="toast('Course catalog coming soon!','info')">Browse Catalog</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="/js/api.js"></script>
+<script>
+const u = getUser();
+if (u) {
+  document.getElementById('sidebar-user-name').textContent = u.name;
+  document.getElementById('sidebar-user-role').textContent = u.role;
+  document.getElementById('sidebar-user-avatar').textContent = u.name.charAt(0);
+}
+</script>
+</body></html>

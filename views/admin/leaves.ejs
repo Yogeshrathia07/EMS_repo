@@ -1,0 +1,92 @@
+<%- include\('../partials/head', {title: 'Leaves — Admin'}) %>
+<div class="app-layout">
+  <%- include\('../partials/sidebar-admin') %>
+  <div class="main-content">
+    <header class="page-header">
+        <button class="mobile-menu-btn" onclick="openSidebar()"><i class="bx bx-menu"></i></button>
+      <div><div class="page-title"><i class="bx bxs-plane-alt"></i> All Leaves</div><div class="page-subtitle">Review and manage all leave requests</div></div>
+      <div class="header-actions">
+        <select id="filter-status" class="form-control" style="width:140px" onchange="loadLeaves()">
+          <option value="">All Status</option>
+          <option value="pending">Pending</option>
+          <option value="approved">Approved</option>
+          <option value="rejected">Rejected</option>
+        </select>
+      </div>
+    </header>
+    <div class="page-body">
+      <div class="card">
+        <div class="card-body">
+          <div class="table-wrapper">
+            <table>
+              <thead><tr><th>Employee</th><th>Role</th><th>Type</th><th>From</th><th>To</th><th>Days</th><th>Reason</th><th>Status</th><th>Approved By</th><th>Actions</th></tr></thead>
+              <tbody id="leaves-tbody"><tr><td colspan="10" style="text-align:center;padding:40px"><span class="spinner"></span></td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="reject-modal">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-header"><span class="modal-title">Reject Leave</span><button class="modal-close" onclick="closeModal('reject-modal')">×</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Reason (optional)</label><textarea id="reject-reason" class="form-control" rows="3"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('reject-modal')">Cancel</button>
+      <button class="btn btn-danger" onclick="confirmReject()">Reject</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script>
+let rejectId = null;
+
+async function loadLeaves() {
+  try {
+    let leaves = await api('GET','/leaves');
+    const filter = document.getElementById('filter-status').value;
+    if (filter) leaves = leaves.filter(l=>l.status===filter);
+    const tbody = document.getElementById('leaves-tbody');
+    if (!leaves.length) {
+      tbody.innerHTML = '<tr><td colspan="10"><div class="empty-state"><div class="empty-icon"><i class="bx bxs-plane-alt"></i></div><p>No leave requests found</p></div></td></tr>'; return;
+    }
+    tbody.innerHTML = leaves.map(l=>`<tr>
+      <td><strong>${l.userId?.name||'—'}</strong></td>
+      <td>${roleBadge(l.userId?.role||'employee')}</td>
+      <td style="text-transform:capitalize">${l.type}</td>
+      <td>${fmtDate(l.startDate)}</td>
+      <td>${fmtDate(l.endDate)}</td>
+      <td>${l.days}</td>
+      <td style="font-size:12px;color:var(--text-secondary);max-width:140px">${l.reason||'—'}</td>
+      <td>${statusBadge(l.status)}</td>
+      <td style="font-size:13px">${l.approvedBy?.name||'—'}</td>
+      <td>
+        ${l.status==='pending'?`
+          <button class="btn btn-success btn-sm" onclick="act('${l._id}','approve')">✓ Approve</button>
+          <button class="btn btn-danger btn-sm" onclick="openReject('${l._id}')">✗ Reject</button>
+        `:'—'}
+      </td>
+    </tr>`).join('');
+  } catch(e) { toast(e.message,'error'); }
+}
+
+async function act(id, action) {
+  try { await api('PATCH',`/leaves/${id}/action`,{action}); toast(`Leave ${action}d`,'success'); loadLeaves(); }
+  catch(e) { toast(e.message,'error'); }
+}
+
+function openReject(id) { rejectId=id; document.getElementById('reject-reason').value=''; openModal('reject-modal'); }
+async function confirmReject() {
+  const reason = document.getElementById('reject-reason').value;
+  try { await api('PATCH',`/leaves/${rejectId}/action`,{action:'reject',rejectionReason:reason}); toast('Leave rejected','success'); closeModal('reject-modal'); loadLeaves(); }
+  catch(e) { toast(e.message,'error'); }
+}
+
+loadLeaves();
+</script>
+</body></html>

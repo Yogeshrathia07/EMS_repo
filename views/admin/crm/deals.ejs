@@ -1,0 +1,136 @@
+<%- include('../../partials/head', {title: 'CRM Deals'}) %>
+<div class="app-layout">
+  <%- include('../../partials/sidebar-admin') %>
+  <div class="main-content">
+    <header class="page-header">
+      <div class="flex items-center gap-3">
+        <button class="mobile-menu-btn" onclick="openSidebar()"><i class="bx bx-menu"></i></button>
+        <div><div class="page-title">CRM — Deals</div><div class="page-subtitle">Track your sales pipeline</div></div>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-primary" onclick="openModal('deal-modal')">＋ Add Deal</button>
+      </div>
+    </header>
+    <div class="page-body">
+      <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);">
+        <div class="stat-card"><div class="stat-icon blue"><i class="bx bxs-briefcase"></i></div><div><div class="stat-value" id="s-deals">0</div><div class="stat-label">Total Deals</div></div></div>
+        <div class="stat-card"><div class="stat-icon green"><i class="bx bxs-trophy"></i></div><div><div class="stat-value" id="s-won">$0</div><div class="stat-label">Won Revenue</div></div></div>
+        <div class="stat-card"><div class="stat-icon orange">🔄</div><div><div class="stat-value" id="s-pipeline">$0</div><div class="stat-label">Pipeline Value</div></div></div>
+        <div class="stat-card"><div class="stat-icon purple"><i class="bx bxs-bar-chart-alt-2"></i></div><div><div class="stat-value" id="s-rate">0%</div><div class="stat-label">Win Rate</div></div></div>
+      </div>
+
+      <!-- Pipeline Board -->
+      <div class="crm-pipeline" id="pipeline-board"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Deal Modal -->
+<div class="modal-overlay" id="deal-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Add Deal</span>
+      <button class="modal-close" onclick="closeModal('deal-modal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Deal Name</label><input type="text" id="d-name" class="form-control" placeholder="e.g. ACME Enterprise License"></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Contact / Company</label><input type="text" id="d-company" class="form-control" placeholder="Company name"></div>
+        <div class="form-group"><label class="form-label">Value ($)</label><input type="number" id="d-value" class="form-control" placeholder="50000"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Stage</label>
+          <select id="d-stage" class="form-control">
+            <option value="prospect">Prospect</option>
+            <option value="qualified">Qualified</option>
+            <option value="proposal">Proposal</option>
+            <option value="negotiation">Negotiation</option>
+            <option value="won">Won</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Expected Close Date</label><input type="date" id="d-close" class="form-control"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('deal-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveDeal()">Add Deal</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script>
+let deals = [
+  { id:1, name:'TechVentures Enterprise', company:'TechVentures Inc', value:45000, stage:'negotiation', close:'2026-03-30' },
+  { id:2, name:'StartupXYZ Starter Plan', company:'StartupXYZ', value:12000, stage:'proposal', close:'2026-04-15' },
+  { id:3, name:'GlobalTrade Integration', company:'GlobalTrade LLC', value:28000, stage:'qualified', close:'2026-05-01' },
+  { id:4, name:'InnovateCorp Suite', company:'InnovateCorp', value:65000, stage:'won', close:'2026-03-15' },
+  { id:5, name:'RetailGroup Expansion', company:'RetailGroup', value:18000, stage:'prospect', close:'2026-06-01' },
+  { id:6, name:'MediaCo Deal', company:'MediaCo', value:32000, stage:'proposal', close:'2026-04-20' },
+];
+
+const stages = ['prospect','qualified','proposal','negotiation','won'];
+const stageLabels = { prospect:'Prospect', qualified:'Qualified', proposal:'Proposal', negotiation:'Negotiation', won:'Won <i class="bx bxs-trophy"></i>' };
+
+const u = getUser();
+if (u) {
+  document.getElementById('sidebar-user-name').textContent = u.name;
+  document.getElementById('sidebar-user-role').textContent = u.role;
+  document.getElementById('sidebar-user-avatar').textContent = u.name.charAt(0);
+}
+
+function renderPipeline() {
+  const won = deals.filter(d=>d.stage==='won');
+  const pipeline = deals.filter(d=>d.stage!=='won');
+
+  document.getElementById('s-deals').textContent = deals.length;
+  document.getElementById('s-won').textContent = '$' + won.reduce((s,d)=>s+d.value,0).toLocaleString();
+  document.getElementById('s-pipeline').textContent = '$' + pipeline.reduce((s,d)=>s+d.value,0).toLocaleString();
+  document.getElementById('s-rate').textContent = deals.length ? Math.round(won.length/deals.length*100)+'%' : '0%';
+
+  document.getElementById('pipeline-board').innerHTML = stages.map(stage => {
+    const stageDeal = deals.filter(d=>d.stage===stage);
+    return `<div class="pipeline-col">
+      <div class="pipeline-col-header">
+        <span class="pipeline-col-title">${stageLabels[stage]}</span>
+        <span class="pipeline-col-count">${stageDeal.length}</span>
+      </div>
+      ${stageDeal.map(d=>`<div class="deal-card" onclick="moveDeal(${d.id})">
+        <div class="deal-card-title">${d.name}</div>
+        <div class="deal-card-company"><i class="bx bxs-building"></i> ${d.company}</div>
+        <div class="deal-card-value">$${d.value.toLocaleString()}</div>
+        <div class="deal-card-meta">
+          <span class="text-xs text-muted"><i class="bx bxs-calendar"></i> ${d.close}</span>
+          <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteDeal(${d.id})">✗</button>
+        </div>
+      </div>`).join('')}
+    </div>`;
+  }).join('');
+}
+
+function saveDeal() {
+  const name = document.getElementById('d-name').value;
+  if (!name) return toast('Deal name required','error');
+  deals.unshift({ id:Date.now(), name, company:document.getElementById('d-company').value, value:parseFloat(document.getElementById('d-value').value)||0, stage:document.getElementById('d-stage').value, close:document.getElementById('d-close').value });
+  toast('Deal added!','success');
+  closeModal('deal-modal');
+  renderPipeline();
+}
+
+function moveDeal(id) {
+  const deal = deals.find(d=>d.id===id);
+  const idx = stages.indexOf(deal.stage);
+  if (idx < stages.length-1) { deal.stage = stages[idx+1]; renderPipeline(); toast('Moved to '+stageLabels[deal.stage],'info'); }
+}
+
+function deleteDeal(id) {
+  if (!confirm('Delete this deal?')) return;
+  deals = deals.filter(d=>d.id!==id);
+  renderPipeline();
+  toast('Deal deleted','success');
+}
+
+renderPipeline();
+</script>
+</body></html>

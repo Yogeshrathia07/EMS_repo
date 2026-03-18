@@ -1,0 +1,82 @@
+<%- include('../partials/head', {title: 'Benefits'}) %>
+<div class="app-layout">
+  <%- include('../partials/sidebar-employee') %>
+  <div class="main-content">
+    <header class="page-header">
+      <div class="flex items-center gap-3">
+        <button class="mobile-menu-btn" onclick="openSidebar()"><i class="bx bx-menu"></i></button>
+        <div><div class="page-title">Benefits</div><div class="page-subtitle">Your compensation & perks</div></div>
+      </div>
+    </header>
+    <div class="page-body">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><div class="card-title"><i class="bx bxs-first-aid"></i> Health Insurance</div><span class="badge badge-active">Active</span></div>
+          <div class="card-body">
+            <div class="detail-grid">
+              <div class="detail-item"><div class="detail-label">Plan</div><div class="detail-value">Premium Plus</div></div>
+              <div class="detail-item"><div class="detail-label">Provider</div><div class="detail-value">BlueCross</div></div>
+              <div class="detail-item"><div class="detail-label">Coverage</div><div class="detail-value">Self + Family</div></div>
+              <div class="detail-item"><div class="detail-label">Renewal</div><div class="detail-value">Jan 2027</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">🦷 Dental & Vision</div><span class="badge badge-active">Active</span></div>
+          <div class="card-body">
+            <div class="detail-grid">
+              <div class="detail-item"><div class="detail-label">Dental</div><div class="detail-value">Basic Plan</div></div>
+              <div class="detail-item"><div class="detail-label">Vision</div><div class="detail-value">Standard Plan</div></div>
+              <div class="detail-item"><div class="detail-label">Annual Limit</div><div class="detail-value">$1,500</div></div>
+              <div class="detail-item"><div class="detail-label">Status</div><div class="detail-value">Enrolled</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title"><i class="bx bxs-bar-chart-alt-2"></i> Retirement (401k)</div><span class="badge badge-active">Active</span></div>
+          <div class="card-body">
+            <div class="detail-grid">
+              <div class="detail-item"><div class="detail-label">Contribution</div><div class="detail-value">5% of salary</div></div>
+              <div class="detail-item"><div class="detail-label">Company Match</div><div class="detail-value">3%</div></div>
+              <div class="detail-item"><div class="detail-label">Vesting</div><div class="detail-value">4-year schedule</div></div>
+              <div class="detail-item"><div class="detail-label">YTD Contribution</div><div class="detail-value">$2,400</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title"><i class="bx bxs-gift"></i> Other Perks</div></div>
+          <div class="card-body">
+            <div class="task-list">
+              <div class="task-item">
+                <div class="task-check done">✓</div>
+                <div class="task-content"><div class="task-title">Work from home allowance — $100/mo</div></div>
+              </div>
+              <div class="task-item">
+                <div class="task-check done">✓</div>
+                <div class="task-content"><div class="task-title">Learning & development — $1,000/yr</div></div>
+              </div>
+              <div class="task-item">
+                <div class="task-check done">✓</div>
+                <div class="task-content"><div class="task-title">Gym membership — $50/mo</div></div>
+              </div>
+              <div class="task-item">
+                <div class="task-check done">✓</div>
+                <div class="task-content"><div class="task-title">Employee referral bonus — $500</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="/js/api.js"></script>
+<script>
+const u = getUser();
+if (u) {
+  document.getElementById('sidebar-user-name').textContent = u.name;
+  document.getElementById('sidebar-user-role').textContent = u.role;
+  document.getElementById('sidebar-user-avatar').textContent = u.name.charAt(0);
+}
+</script>
+</body></html>

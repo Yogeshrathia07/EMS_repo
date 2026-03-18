@@ -1,0 +1,73 @@
+<%- include('../../partials/head', {title: 'CRM Pipeline'}) %>
+<div class="app-layout">
+  <%- include('../../partials/sidebar-admin') %>
+  <div class="main-content">
+    <header class="page-header">
+      <div class="flex items-center gap-3">
+        <button class="mobile-menu-btn" onclick="openSidebar()"><i class="bx bx-menu"></i></button>
+        <div><div class="page-title">CRM — Pipeline</div><div class="page-subtitle">Sales funnel overview</div></div>
+      </div>
+    </header>
+    <div class="page-body">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><div class="card-title">Pipeline Funnel</div></div>
+          <div class="card-body" id="funnel-chart">
+            <div id="funnel"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Stage Breakdown</div></div>
+          <div class="card-body" id="stage-breakdown"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="/js/api.js"></script>
+<script>
+const u = getUser();
+if (u) {
+  document.getElementById('sidebar-user-name').textContent = u.name;
+  document.getElementById('sidebar-user-role').textContent = u.role;
+  document.getElementById('sidebar-user-avatar').textContent = u.name.charAt(0);
+}
+
+const stages = [
+  { name:'Prospect', count:12, value:280000, color:'#3b82f6' },
+  { name:'Qualified', count:8, value:195000, color:'#8b5cf6' },
+  { name:'Proposal', count:5, value:142000, color:'#f59e0b' },
+  { name:'Negotiation', count:3, value:98000, color:'#ef4444' },
+  { name:'Won', count:7, value:320000, color:'#10b981' },
+];
+
+const maxCount = Math.max(...stages.map(s=>s.count));
+
+document.getElementById('funnel').innerHTML = stages.map(s => {
+  const w = Math.round((s.count / maxCount) * 100);
+  return `<div style="margin-bottom:12px;">
+    <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:4px;">
+      <span>${s.name}</span>
+      <span>${s.count} deals · $${s.value.toLocaleString()}</span>
+    </div>
+    <div style="height:36px;background:var(--bg-input);border-radius:8px;overflow:hidden;">
+      <div style="height:100%;width:${w}%;background:${s.color};border-radius:8px;display:flex;align-items:center;padding:0 12px;color:white;font-size:12px;font-weight:700;transition:width 0.5s ease;">${s.count}</div>
+    </div>
+  </div>`;
+}).join('');
+
+document.getElementById('stage-breakdown').innerHTML = `
+  <div class="breakdown-item" style="font-weight:700;color:var(--text-muted);font-size:11px;text-transform:uppercase;">
+    <span>Stage</span><span>Deals</span>
+  </div>
+  ${stages.map(s=>`<div class="breakdown-item">
+    <span style="display:flex;align-items:center;gap:8px;"><span style="width:10px;height:10px;border-radius:50%;background:${s.color};display:inline-block;"></span>${s.name}</span>
+    <span><strong>${s.count}</strong> deals — <strong>$${s.value.toLocaleString()}</strong></span>
+  </div>`).join('')}
+  <div class="breakdown-total">
+    <span>Total Pipeline</span>
+    <span>$${stages.reduce((s,d)=>s+d.value,0).toLocaleString()}</span>
+  </div>
+`;
+</script>
+</body></html>

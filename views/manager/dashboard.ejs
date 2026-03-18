@@ -1,0 +1,94 @@
+<%- include('../partials/head', {title: 'Manager Dashboard'}) %>
+<div class="app-layout">
+  <%- include('../partials/sidebar-manager') %>
+  <div class="main-content">
+    <header class="page-header">
+        <button class="mobile-menu-btn" onclick="openSidebar()"><i class="bx bx-menu"></i></button>
+      <div><div class="page-title">Dashboard</div><div class="page-subtitle">Team overview and pending actions</div></div>
+    </header>
+    <div class="page-body">
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-icon purple"><i class="bx bxs-group"></i></div><div><div class="stat-value" id="stat-team">—</div><div class="stat-label">Team Members</div></div></div>
+        <div class="stat-card"><div class="stat-icon orange"><i class="bx bxs-plane-alt"></i></div><div><div class="stat-value" id="stat-leave-pending">—</div><div class="stat-label">Pending Team Leaves</div></div></div>
+        <div class="stat-card"><div class="stat-icon pink"><i class="bx bxs-time-five"></i></div><div><div class="stat-value" id="stat-ts-pending">—</div><div class="stat-label">Pending Team Timesheets</div></div></div>
+        <div class="stat-card"><div class="stat-icon green"><i class="bx bxs-check-circle"></i></div><div><div class="stat-value" id="stat-approved">—</div><div class="stat-label">Approved This Month</div></div></div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
+        <div class="card">
+          <div class="card-header"><span class="card-title"><i class="bx bxs-plane-alt"></i> Pending Team Leaves</span><a href="/manager/leaves" class="btn btn-ghost btn-sm">Manage</a></div>
+          <div class="card-body" id="pending-leaves"></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title"><i class="bx bxs-time-five"></i> Pending Team Timesheets</span><a href="/manager/timesheets" class="btn btn-ghost btn-sm">Manage</a></div>
+          <div class="card-body" id="pending-ts"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="/js/api.js"></script>
+<script>
+async function loadDashboard() {
+  try {
+    const [users, leaves, ts] = await Promise.all([
+      api('GET', '/users'),
+      api('GET', '/leaves?scope=team'),
+      api('GET', '/timesheets?scope=team')
+    ]);
+
+    document.getElementById('stat-team').textContent = users.length;
+    const pendingLeaves = leaves.filter(l => l.status === 'pending');
+    const pendingTs = ts.filter(t => t.status === 'pending');
+    document.getElementById('stat-leave-pending').textContent = pendingLeaves.length;
+    document.getElementById('stat-ts-pending').textContent = pendingTs.length;
+
+    const now = new Date();
+    const approvedThisMonth = [...leaves, ...ts].filter(x => x.status === 'approved' && new Date(x.updatedAt).getMonth() === now.getMonth()).length;
+    document.getElementById('stat-approved').textContent = approvedThisMonth;
+
+    const renderLeaves = pendingLeaves.slice(0,5);
+    document.getElementById('pending-leaves').innerHTML = renderLeaves.length ? `
+      <div class="table-wrapper"><table>
+        <thead><tr><th>Employee</th><th>Type</th><th>Days</th><th>Action</th></tr></thead>
+        <tbody>${renderLeaves.map(l => `<tr>
+          <td>${l.userId?.name}</td>
+          <td style="text-transform:capitalize">${l.type}</td>
+          <td>${l.days}</td>
+          <td>
+            <button class="btn btn-success btn-sm" onclick="actLeave('${l._id}','approve')">✓</button>
+            <button class="btn btn-danger btn-sm" onclick="actLeave('${l._id}','reject')">✗</button>
+          </td>
+        </tr>`).join('')}</tbody>
+      </table></div>` : '<div class="empty-state"><div class="empty-icon"><i class="bx bxs-check-circle"></i></div><p>No pending leaves</p></div>';
+
+    const renderTs = pendingTs.slice(0,5);
+    document.getElementById('pending-ts').innerHTML = renderTs.length ? `
+      <div class="table-wrapper"><table>
+        <thead><tr><th>Employee</th><th>Week</th><th>Hours</th><th>Action</th></tr></thead>
+        <tbody>${renderTs.map(t => `<tr>
+          <td>${t.userId?.name}</td>
+          <td style="font-size:12px">${fmtDate(t.weekStart)}</td>
+          <td>${t.totalHours}h</td>
+          <td>
+            <button class="btn btn-success btn-sm" onclick="actTs('${t._id}','approve')">✓</button>
+            <button class="btn btn-danger btn-sm" onclick="actTs('${t._id}','reject')">✗</button>
+          </td>
+        </tr>`).join('')}</tbody>
+      </table></div>` : '<div class="empty-state"><div class="empty-icon"><i class="bx bxs-check-circle"></i></div><p>No pending timesheets</p></div>';
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+async function actLeave(id, action) {
+  try { await api('PATCH', `/leaves/${id}/action`, { action }); toast(`Leave ${action}d`, 'success'); loadDashboard(); }
+  catch(e) { toast(e.message, 'error'); }
+}
+
+async function actTs(id, action) {
+  try { await api('PATCH', `/timesheets/${id}/action`, { action }); toast(`Timesheet ${action}d`, 'success'); loadDashboard(); }
+  catch(e) { toast(e.message, 'error'); }
+}
+
+loadDashboard();
+</script>
+</body></html>

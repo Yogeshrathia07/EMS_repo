@@ -1,0 +1,219 @@
+<%- include('../partials/head', {title: 'Time Off'}) %>
+<div class="app-layout">
+  <%- include('../partials/sidebar-employee') %>
+  <div class="main-content">
+    <header class="page-header">
+      <div class="flex items-center gap-3">
+        <button class="mobile-menu-btn" onclick="openSidebar()"><i class="bx bx-menu"></i></button>
+        <div>
+          <div class="page-title">Time Off</div>
+          <div class="page-subtitle">Manage your leave requests</div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-primary" onclick="openModal('leave-modal')">＋ Apply Leave</button>
+      </div>
+    </header>
+    <div class="page-body">
+      <!-- Leave Balance Cards -->
+      <div class="stats-grid" style="grid-template-columns:repeat(5,1fr);">
+        <div class="stat-card">
+          <div class="stat-icon green"><i class="bx bxs-check-circle"></i></div>
+          <div><div class="stat-value" id="bal-annual">20</div><div class="stat-label">Annual Leave</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon red">🤒</div>
+          <div><div class="stat-value" id="bal-sick">10</div><div class="stat-label">Sick Leave</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon blue"><i class="bx bxs-briefcase"></i></div>
+          <div><div class="stat-value" id="bal-personal">5</div><div class="stat-label">Personal Leave</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon orange">⏳</div>
+          <div><div class="stat-value" id="stat-pending">0</div><div class="stat-label">Pending</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon purple"><i class="bx bxs-calendar"></i></div>
+          <div><div class="stat-value" id="stat-used">0</div><div class="stat-label">Days Used</div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Leave Requests</div>
+            <div class="card-subtitle">Your time-off history</div>
+          </div>
+          <div class="flex gap-2">
+            <div class="toggle-group mb-0">
+              <button class="toggle-btn active" id="f-all" onclick="filterLeaves('all')">All</button>
+              <button class="toggle-btn" id="f-pending" onclick="filterLeaves('pending')">Pending</button>
+              <button class="toggle-btn" id="f-approved" onclick="filterLeaves('approved')">Approved</button>
+              <button class="toggle-btn" id="f-rejected" onclick="filterLeaves('rejected')">Rejected</button>
+            </div>
+          </div>
+        </div>
+        <div style="padding:0;">
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Leave Type</th>
+                  <th>From</th>
+                  <th>To</th>
+                  <th>Days</th>
+                  <th>Reason</th>
+                  <th>Status</th>
+                  <th>Reviewed By</th>
+                  <th>Applied</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="leaves-tbody">
+                <tr><td colspan="9" style="text-align:center;padding:40px"><span class="spinner"></span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Apply Leave Modal -->
+<div class="modal-overlay" id="leave-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Apply for Leave</span>
+      <button class="modal-close" onclick="closeModal('leave-modal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="toggle-group">
+        <button class="toggle-btn active" id="toggle-single" onclick="toggleMode('single')">Single Day</button>
+        <button class="toggle-btn" id="toggle-range" onclick="toggleMode('range')">Date Range</button>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Leave Type</label>
+        <select id="leave-type" class="form-control">
+          <option value="annual"><i class="bx bxs-plane-alt"></i> Annual Leave</option>
+          <option value="sick">🤒 Sick Leave</option>
+          <option value="personal"><i class="bx bxs-briefcase"></i> Personal Leave</option>
+          <option value="unpaid">💸 Unpaid Leave</option>
+          <option value="other">📝 Other</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group mb-0">
+          <label class="form-label">Start Date</label>
+          <input type="date" id="leave-start" class="form-control">
+        </div>
+        <div class="form-group mb-0" id="end-date-group" style="display:none;">
+          <label class="form-label">End Date</label>
+          <input type="date" id="leave-end" class="form-control">
+        </div>
+      </div>
+      <div class="form-group mt-3">
+        <label class="form-label">Reason <span class="text-muted">(optional)</span></label>
+        <textarea id="leave-reason" class="form-control" rows="3" placeholder="Briefly describe the reason..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('leave-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitLeave()">Submit Request</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script>
+let singleMode = true;
+let allLeaves = [];
+let currentFilter = 'all';
+
+const u = getUser();
+if (u) {
+  document.getElementById('sidebar-user-name').textContent = u.name;
+  document.getElementById('sidebar-user-role').textContent = u.role;
+  document.getElementById('sidebar-user-avatar').textContent = u.name.charAt(0);
+}
+
+function toggleMode(mode) {
+  singleMode = mode === 'single';
+  document.getElementById('toggle-single').classList.toggle('active', singleMode);
+  document.getElementById('toggle-range').classList.toggle('active', !singleMode);
+  document.getElementById('end-date-group').style.display = singleMode ? 'none' : '';
+}
+
+function filterLeaves(filter) {
+  currentFilter = filter;
+  ['all','pending','approved','rejected'].forEach(f =>
+    document.getElementById('f-'+f).classList.toggle('active', f===filter)
+  );
+  renderLeaves();
+}
+
+function renderLeaves() {
+  const filtered = currentFilter === 'all' ? allLeaves : allLeaves.filter(l => l.status === currentFilter);
+  const tbody = document.getElementById('leaves-tbody');
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><div class="empty-icon"><i class="bx bxs-plane-alt"></i></div><h3>No ${currentFilter === 'all' ? '' : currentFilter} leaves</h3><p>${currentFilter === 'all' ? 'Click "+ Apply Leave" to submit your first request' : 'No records found for this filter'}</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = filtered.map(l => `<tr>
+    <td><strong style="text-transform:capitalize">${l.type}</strong></td>
+    <td>${fmtDate(l.startDate)}</td>
+    <td>${fmtDate(l.endDate)}</td>
+    <td><span style="font-weight:700;font-size:15px;">${l.days}</span> day${l.days!==1?'s':''}</td>
+    <td class="truncate" style="max-width:140px;color:var(--text-secondary)">${l.reason || '—'}</td>
+    <td>${statusBadge(l.status)}</td>
+    <td class="text-sm">${l.approvedBy ? l.approvedBy.name : '—'}</td>
+    <td class="text-sm text-muted">${fmtDate(l.createdAt)}</td>
+    <td>${l.status === 'pending' ? `<button class="btn btn-danger btn-sm" onclick="deleteLeave('${l.id}')">Delete</button>` : '—'}</td>
+  </tr>`).join('');
+}
+
+async function loadLeaves() {
+  try {
+    const leaves = await api('GET', '/leaves');
+    allLeaves = leaves;
+
+    const pending = leaves.filter(l => l.status === 'pending').length;
+    const used = leaves.filter(l => l.status === 'approved').reduce((s,l) => s+l.days, 0);
+    document.getElementById('stat-pending').textContent = pending;
+    document.getElementById('stat-used').textContent = used;
+
+    renderLeaves();
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+async function submitLeave() {
+  const type = document.getElementById('leave-type').value;
+  const start = document.getElementById('leave-start').value;
+  const end = singleMode ? start : document.getElementById('leave-end').value;
+  const reason = document.getElementById('leave-reason').value;
+
+  if (!start) return toast('Please select a start date', 'error');
+  if (!singleMode && !end) return toast('Please select an end date', 'error');
+  if (!singleMode && end < start) return toast('End date must be after start date', 'error');
+
+  try {
+    await api('POST', '/leaves', { type, startDate: start, endDate: end, reason });
+    toast('Leave request submitted!', 'success');
+    closeModal('leave-modal');
+    loadLeaves();
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+async function deleteLeave(id) {
+  if (!confirm('Delete this leave request?')) return;
+  try {
+    await api('DELETE', `/leaves/${id}`);
+    toast('Leave deleted', 'success');
+    loadLeaves();
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+loadLeaves();
+</script>
+</body></html>

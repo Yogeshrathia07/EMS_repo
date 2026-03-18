@@ -1,0 +1,165 @@
+<%- include('../partials/head', {title: 'Timesheets'}) %>
+<div class="app-layout">
+  <%- include('../partials/sidebar-manager') %>
+  <div class="main-content">
+    <header class="page-header">
+        <button class="mobile-menu-btn" onclick="openSidebar()"><i class="bx bx-menu"></i></button>
+      <div><div class="page-title"><i class="bx bxs-time-five"></i> Timesheets</div><div class="page-subtitle">Review team timesheets and manage your own</div></div>
+      <div class="header-actions">
+        <button class="btn btn-primary" onclick="openModal('ts-modal')">＋ My Timesheet</button>
+      </div>
+    </header>
+    <div class="page-body">
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('team')"><i class="bx bxs-group"></i> Team</button>
+        <button class="tab-btn" onclick="switchTab('own')"><i class="bx bxs-user-circle"></i> Mine</button>
+      </div>
+      <div class="card">
+        <div class="card-body">
+          <div class="table-wrapper">
+            <table>
+              <thead id="ts-head"></thead>
+              <tbody id="ts-tbody"><tr><td colspan="8" style="text-align:center;padding:40px"><span class="spinner"></span></td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- New Timesheet Modal -->
+<div class="modal-overlay" id="ts-modal">
+  <div class="modal" style="max-width:640px">
+    <div class="modal-header"><span class="modal-title">My Timesheet</span><button class="modal-close" onclick="closeModal('ts-modal')">×</button></div>
+    <div class="modal-body">
+      <div class="toggle-group">
+        <button class="toggle-btn active" id="tog-s" onclick="setMode('single')">Single Day</button>
+        <button class="toggle-btn" id="tog-w" onclick="setMode('week')">Full Week</button>
+      </div>
+      <div id="s-mode">
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Date</label><input type="date" id="ts-date" class="form-control"></div>
+          <div class="form-group"><label class="form-label">Hours</label><input type="number" id="ts-hrs" class="form-control" min="0" max="24" step="0.5"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Work Type</label><select id="ts-wt" class="form-control"><option value="work">Work</option><option value="leave">Leave</option><option value="holiday">Holiday</option><option value="half-day">Half Day</option></select></div>
+          <div class="form-group"><label class="form-label">Project</label><input type="text" id="ts-proj" class="form-control"></div>
+        </div>
+        <div class="form-group"><label class="form-label">Description</label><textarea id="ts-desc" class="form-control" rows="2"></textarea></div>
+      </div>
+      <div id="w-mode" style="display:none">
+        <div class="form-group"><label class="form-label">Week Start (Monday)</label><input type="date" id="wk-start" class="form-control" style="max-width:200px" onchange="buildGrid()"></div>
+        <div class="week-grid" id="wk-grid"></div>
+        <div style="margin-top:12px;font-size:13px;color:var(--text-muted)">Total: <strong id="wk-total">0</strong>h</div>
+      </div>
+      <div class="form-group" style="margin-top:16px"><label class="form-label">Notes</label><textarea id="ts-notes" class="form-control" rows="2"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('ts-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitTs()">Submit</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script>
+let currentTab = 'team', tsMode = 'single';
+const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday'];
+
+function setMode(m) {
+  tsMode = m;
+  document.getElementById('tog-s').classList.toggle('active', m==='single');
+  document.getElementById('tog-w').classList.toggle('active', m==='week');
+  document.getElementById('s-mode').style.display = m==='single' ? '' : 'none';
+  document.getElementById('w-mode').style.display = m==='week' ? '' : 'none';
+}
+
+function buildGrid() {
+  const ws = document.getElementById('wk-start').value;
+  if (!ws) return;
+  document.getElementById('wk-grid').innerHTML = DAYS.map((d,i) => {
+    const dt = new Date(ws); dt.setDate(dt.getDate()+i);
+    return `<div class="week-row">
+      <span class="week-day-label">${d}</span>
+      <input type="number" class="form-control we-h" data-date="${dt.toISOString().split('T')[0]}" min="0" max="24" step="0.5" placeholder="0" oninput="updateTotal()">
+      <select class="form-control we-t"><option value="work">Work</option><option value="leave">Leave</option><option value="holiday">Holiday</option><option value="half-day">Half Day</option></select>
+      <input type="text" class="form-control we-p" placeholder="Project">
+      <input type="text" class="form-control we-d" placeholder="Task">
+    </div>`;
+  }).join('');
+}
+
+function updateTotal() {
+  document.getElementById('wk-total').textContent = [...document.querySelectorAll('.we-h')].reduce((s,i)=>s+(parseFloat(i.value)||0),0);
+}
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',(i===0)===(tab==='team')));
+  loadTs();
+}
+
+async function loadTs() {
+  try {
+    const scope = currentTab === 'team' ? '?scope=team' : '?scope=own';
+    const ts = await api('GET', '/timesheets'+scope);
+    const head = document.getElementById('ts-head'), tbody = document.getElementById('ts-tbody');
+    if (currentTab === 'team') {
+      head.innerHTML = '<tr><th>Employee</th><th>Week</th><th>Hours</th><th>Status</th><th>Submitted</th><th>Actions</th></tr>';
+      tbody.innerHTML = ts.length ? ts.map(t=>`<tr>
+        <td>${t.userId?.name}</td>
+        <td style="font-size:12px">${fmtDate(t.weekStart)} – ${fmtDate(t.weekEnd)}</td>
+        <td>${t.totalHours}h</td>
+        <td>${statusBadge(t.status)}</td>
+        <td style="font-size:12px;color:var(--text-muted)">${fmtDate(t.createdAt)}</td>
+        <td>${t.status==='pending'?`
+          <button class="btn btn-success btn-sm" onclick="act('${t._id}','approve')">✓</button>
+          <button class="btn btn-danger btn-sm" onclick="act('${t._id}','reject')">✗</button>`:'—'}</td>
+      </tr>`).join('') : '<tr><td colspan="6"><div class="empty-state"><div class="empty-icon"><i class="bx bxs-time-five"></i></div><p>No team timesheets</p></div></td></tr>';
+    } else {
+      head.innerHTML = '<tr><th>Week</th><th>Hours</th><th>Status</th><th>Submitted</th><th>Action</th></tr>';
+      tbody.innerHTML = ts.length ? ts.map(t=>`<tr>
+        <td>${fmtDate(t.weekStart)} – ${fmtDate(t.weekEnd)}</td>
+        <td>${t.totalHours}h</td>
+        <td>${statusBadge(t.status)}</td>
+        <td style="font-size:12px;color:var(--text-muted)">${fmtDate(t.createdAt)}</td>
+        <td>${t.status==='pending'?`<button class="btn btn-danger btn-sm" onclick="delTs('${t._id}')">Delete</button>`:'—'}</td>
+      </tr>`).join('') : '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon"><i class="bx bxs-time-five"></i></div><p>No timesheets</p></div></td></tr>';
+    }
+  } catch(e) { toast(e.message,'error'); }
+}
+
+async function act(id, action) {
+  try { await api('PATCH',`/timesheets/${id}/action`,{action}); toast(`Timesheet ${action}d`,'success'); loadTs(); }
+  catch(e) { toast(e.message,'error'); }
+}
+
+async function submitTs() {
+  let entries=[], weekStart, weekEnd;
+  if (tsMode==='single') {
+    const date = document.getElementById('ts-date').value;
+    if (!date) return toast('Select a date','error');
+    entries=[{date,hours:parseFloat(document.getElementById('ts-hrs').value)||0,workType:document.getElementById('ts-wt').value,project:document.getElementById('ts-proj').value,description:document.getElementById('ts-desc').value}];
+    weekStart=weekEnd=date;
+  } else {
+    const ws = document.getElementById('wk-start').value;
+    if (!ws) return toast('Select week start','error');
+    entries=[...document.querySelectorAll('.week-row')].map(r=>({date:r.querySelector('.we-h').dataset.date,hours:parseFloat(r.querySelector('.we-h').value)||0,workType:r.querySelector('.we-t').value,project:r.querySelector('.we-p').value,description:r.querySelector('.we-d').value}));
+    weekStart=ws;
+    const we=new Date(ws);we.setDate(we.getDate()+4);weekEnd=we.toISOString().split('T')[0];
+  }
+  const notes=document.getElementById('ts-notes').value;
+  try { await api('POST','/timesheets',{weekStart,weekEnd,entries,notes}); toast('Timesheet submitted!','success'); closeModal('ts-modal'); loadTs(); }
+  catch(e) { toast(e.message,'error'); }
+}
+
+async function delTs(id) {
+  if (!confirm('Delete?')) return;
+  try { await api('DELETE',`/timesheets/${id}`); toast('Deleted','success'); loadTs(); }
+  catch(e) { toast(e.message,'error'); }
+}
+
+loadTs();
+</script>
+</body></html>

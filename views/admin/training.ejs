@@ -1,0 +1,49 @@
+<%- include('../partials/head', {title: 'Training'}) %>
+<div class="app-layout">
+  <%- include('../partials/sidebar-admin') %>
+  <div class="main-content">
+    <header class="page-header">
+      <div class="flex items-center gap-3">
+        <button class="mobile-menu-btn" onclick="openSidebar()"><i class="bx bx-menu"></i></button>
+        <div><div class="page-title">HRM — Training</div><div class="page-subtitle">Manage company training programs</div></div>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-primary" onclick="toast('Training management coming soon!','info')">＋ Add Program</button>
+      </div>
+    </header>
+    <div class="page-body">
+      <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);">
+        <div class="stat-card"><div class="stat-icon blue"><i class="bx bxs-graduation"></i></div><div><div class="stat-value">8</div><div class="stat-label">Active Programs</div></div></div>
+        <div class="stat-card"><div class="stat-icon green"><i class="bx bxs-check-circle"></i></div><div><div class="stat-value">42</div><div class="stat-label">Completions</div></div></div>
+        <div class="stat-card"><div class="stat-icon orange">⏳</div><div><div class="stat-value">15</div><div class="stat-label">In Progress</div></div></div>
+        <div class="stat-card"><div class="stat-icon purple"><i class="bx bxs-bar-chart-alt-2"></i></div><div><div class="stat-value">87%</div><div class="stat-label">Completion Rate</div></div></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">Training Programs</div></div>
+        <div class="card-body">
+          <div class="table-wrapper">
+            <table>
+              <thead><tr><th>Program</th><th>Category</th><th>Duration</th><th>Enrolled</th><th>Completed</th><th>Completion Rate</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr><td><strong>Security Awareness</strong></td><td>Required</td><td>2h</td><td>12</td><td>10</td><td><div class="progress-bar-wrap" style="width:100px"><div class="progress-bar-fill green" style="width:83%"></div></div> 83%</td><td><span class="badge badge-active">Active</span></td></tr>
+                <tr><td><strong>Data Privacy & GDPR</strong></td><td>Required</td><td>3h</td><td>12</td><td>7</td><td><div class="progress-bar-wrap" style="width:100px"><div class="progress-bar-fill" style="width:58%"></div></div> 58%</td><td><span class="badge badge-active">Active</span></td></tr>
+                <tr><td><strong>Leadership Fundamentals</strong></td><td>Optional</td><td>5h</td><td>5</td><td>3</td><td><div class="progress-bar-wrap" style="width:100px"><div class="progress-bar-fill orange" style="width:60%"></div></div> 60%</td><td><span class="badge badge-active">Active</span></td></tr>
+                <tr><td><strong>Effective Communication</strong></td><td>Required</td><td>4h</td><td>12</td><td>12</td><td><div class="progress-bar-wrap" style="width:100px"><div class="progress-bar-fill green" style="width:100%"></div></div> 100%</td><td><span class="badge badge-completed">Completed</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="/js/api.js"></script>
+<script>
+const u = getUser();
+if (u) {
+  document.getElementById('sidebar-user-name').textContent = u.name;
+  document.getElementById('sidebar-user-role').textContent = u.role;
+  document.getElementById('sidebar-user-avatar').textContent = u.name.charAt(0);
+}
+</script>
+</body></html>

@@ -1,0 +1,177 @@
+<%- include('../../partials/head', {title: 'CRM Contacts'}) %>
+<div class="app-layout">
+  <%- include('../../partials/sidebar-admin') %>
+  <div class="main-content">
+    <header class="page-header">
+      <div class="flex items-center gap-3">
+        <button class="mobile-menu-btn" onclick="openSidebar()"><i class="bx bx-menu"></i></button>
+        <div><div class="page-title">CRM — Contacts</div><div class="page-subtitle">Manage your customer relationships</div></div>
+      </div>
+      <div class="header-actions">
+        <div class="search-bar" style="width:240px;">
+          <span class="search-icon">🔍</span>
+          <input type="text" placeholder="Search contacts..." id="search-input" oninput="filterContacts()">
+        </div>
+        <button class="btn btn-primary" onclick="openModal('contact-modal')">＋ Add Contact</button>
+      </div>
+    </header>
+    <div class="page-body">
+      <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);">
+        <div class="stat-card"><div class="stat-icon blue"><i class="bx bxs-group"></i></div><div><div class="stat-value" id="s-total">0</div><div class="stat-label">Total Contacts</div></div></div>
+        <div class="stat-card"><div class="stat-icon red"><i class="bx bxs-hot"></i></div><div><div class="stat-value" id="s-hot">0</div><div class="stat-label">Hot Leads</div></div></div>
+        <div class="stat-card"><div class="stat-icon orange">🌡️</div><div><div class="stat-value" id="s-warm">0</div><div class="stat-label">Warm Leads</div></div></div>
+        <div class="stat-card"><div class="stat-icon blue">❄️</div><div><div class="stat-value" id="s-cold">0</div><div class="stat-label">Cold Leads</div></div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div><div class="card-title">All Contacts</div></div>
+          <div class="toggle-group mb-0">
+            <button class="toggle-btn active" onclick="setFilter('all',this)">All</button>
+            <button class="toggle-btn" onclick="setFilter('hot',this)"><i class="bx bxs-hot"></i> Hot</button>
+            <button class="toggle-btn" onclick="setFilter('warm',this)">🌡️ Warm</button>
+            <button class="toggle-btn" onclick="setFilter('cold',this)">❄️ Cold</button>
+          </div>
+        </div>
+        <div style="padding:0;">
+          <div class="table-wrapper">
+            <table>
+              <thead><tr><th>Name</th><th>Company</th><th>Email</th><th>Phone</th><th>Stage</th><th>Value</th><th>Actions</th></tr></thead>
+              <tbody id="contacts-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Contact Modal -->
+<div class="modal-overlay" id="contact-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Add Contact</span>
+      <button class="modal-close" onclick="closeModal('contact-modal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">First Name</label><input type="text" id="c-fname" class="form-control" placeholder="John"></div>
+        <div class="form-group"><label class="form-label">Last Name</label><input type="text" id="c-lname" class="form-control" placeholder="Doe"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Email</label><input type="email" id="c-email" class="form-control" placeholder="john@company.com"></div>
+        <div class="form-group"><label class="form-label">Phone</label><input type="text" id="c-phone" class="form-control" placeholder="+1 555 0000"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Company</label><input type="text" id="c-company" class="form-control" placeholder="ACME Corp"></div>
+        <div class="form-group"><label class="form-label">Position</label><input type="text" id="c-position" class="form-control" placeholder="CEO"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Lead Stage</label>
+          <select id="c-stage" class="form-control">
+            <option value="cold">❄️ Cold</option>
+            <option value="warm">🌡️ Warm</option>
+            <option value="hot"><i class="bx bxs-hot"></i> Hot</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Deal Value ($)</label><input type="number" id="c-value" class="form-control" placeholder="10000"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Notes</label><textarea id="c-notes" class="form-control" rows="2" placeholder="Any notes about this contact..."></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('contact-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveContact()">Add Contact</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script>
+// Local contacts store (in production, use API)
+let contacts = [
+  { id:1, name:'Alice Johnson', company:'TechVentures Inc', email:'alice@techventures.com', phone:'+1 555 0101', stage:'hot', value:45000, notes:'Very interested in enterprise plan' },
+  { id:2, name:'Bob Williams', company:'StartupXYZ', email:'bob@startupxyz.com', phone:'+1 555 0202', stage:'warm', value:12000, notes:'Evaluating options' },
+  { id:3, name:'Carol Martinez', company:'GlobalTrade LLC', email:'carol@globaltrade.com', phone:'+1 555 0303', stage:'cold', value:8000, notes:'Initial contact made' },
+  { id:4, name:'David Chen', company:'InnovateCorp', email:'david@innovate.com', phone:'+1 555 0404', stage:'hot', value:65000, notes:'Requested demo' },
+  { id:5, name:'Emma Davis', company:'RetailGroup', email:'emma@retail.com', phone:'+1 555 0505', stage:'warm', value:22000, notes:'Follow up next week' },
+];
+let filterStage = 'all';
+let searchQ = '';
+
+const u = getUser();
+if (u) {
+  document.getElementById('sidebar-user-name').textContent = u.name;
+  document.getElementById('sidebar-user-role').textContent = u.role;
+  document.getElementById('sidebar-user-avatar').textContent = u.name.charAt(0);
+}
+
+function setFilter(stage, btn) {
+  filterStage = stage;
+  document.querySelectorAll('.toggle-group .toggle-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderContacts();
+}
+
+function filterContacts() {
+  searchQ = document.getElementById('search-input').value.toLowerCase();
+  renderContacts();
+}
+
+function renderContacts() {
+  let data = contacts;
+  if (filterStage !== 'all') data = data.filter(c=>c.stage===filterStage);
+  if (searchQ) data = data.filter(c=>c.name.toLowerCase().includes(searchQ)||c.company.toLowerCase().includes(searchQ)||c.email.toLowerCase().includes(searchQ));
+
+  document.getElementById('s-total').textContent = contacts.length;
+  document.getElementById('s-hot').textContent = contacts.filter(c=>c.stage==='hot').length;
+  document.getElementById('s-warm').textContent = contacts.filter(c=>c.stage==='warm').length;
+  document.getElementById('s-cold').textContent = contacts.filter(c=>c.stage==='cold').length;
+
+  document.getElementById('contacts-tbody').innerHTML = data.length ? data.map(c=>`<tr>
+    <td><strong>${c.name}</strong></td>
+    <td>${c.company}</td>
+    <td>${c.email}</td>
+    <td>${c.phone}</td>
+    <td><span class="badge badge-${c.stage}">${c.stage.charAt(0).toUpperCase()+c.stage.slice(1)}</span></td>
+    <td><strong>$${c.value.toLocaleString()}</strong></td>
+    <td class="flex gap-2">
+      <button class="btn btn-ghost btn-sm" onclick="editContact(${c.id})">✏️</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteContact(${c.id})">🗑️</button>
+    </td>
+  </tr>`).join('') : '<tr><td colspan="7"><div class="empty-state"><div class="empty-icon"><i class="bx bxs-notepad"></i></div><h3>No contacts found</h3></div></td></tr>';
+}
+
+function saveContact() {
+  const name = document.getElementById('c-fname').value + ' ' + document.getElementById('c-lname').value;
+  if (!name.trim()) return toast('Name is required', 'error');
+  const newContact = {
+    id: Date.now(),
+    name,
+    company: document.getElementById('c-company').value,
+    email: document.getElementById('c-email').value,
+    phone: document.getElementById('c-phone').value,
+    stage: document.getElementById('c-stage').value,
+    value: parseFloat(document.getElementById('c-value').value)||0,
+    notes: document.getElementById('c-notes').value,
+  };
+  contacts.unshift(newContact);
+  toast('Contact added!', 'success');
+  closeModal('contact-modal');
+  renderContacts();
+}
+
+function deleteContact(id) {
+  if (!confirm('Delete this contact?')) return;
+  contacts = contacts.filter(c=>c.id!==id);
+  renderContacts();
+  toast('Contact deleted', 'success');
+}
+
+function editContact(id) {
+  toast('Edit functionality coming soon!', 'info');
+}
+
+renderContacts();
+</script>
+</body></html>

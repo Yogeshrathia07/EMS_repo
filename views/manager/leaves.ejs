@@ -1,0 +1,157 @@
+<%- include('../partials/head', {title: 'Leaves'}) %>
+<div class="app-layout">
+  <%- include('../partials/sidebar-manager') %>
+  <div class="main-content">
+    <header class="page-header">
+        <button class="mobile-menu-btn" onclick="openSidebar()"><i class="bx bx-menu"></i></button>
+      <div><div class="page-title"><i class="bx bxs-plane-alt"></i> Leaves</div><div class="page-subtitle">Manage team leaves and your own</div></div>
+      <div class="header-actions">
+        <button class="btn btn-primary" onclick="openModal('apply-modal')">＋ Apply My Leave</button>
+      </div>
+    </header>
+    <div class="page-body">
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('team')"><i class="bx bxs-group"></i> Team Leaves</button>
+        <button class="tab-btn" onclick="switchTab('own')"><i class="bx bxs-user-circle"></i> My Leaves</button>
+      </div>
+
+      <div class="card">
+        <div class="card-body">
+          <div class="table-wrapper">
+            <table>
+              <thead id="table-head"></thead>
+              <tbody id="leaves-tbody"><tr><td colspan="8" style="text-align:center;padding:40px"><span class="spinner"></span></td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Apply Leave Modal -->
+<div class="modal-overlay" id="apply-modal">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title">Apply for My Leave</span><button class="modal-close" onclick="closeModal('apply-modal')">×</button></div>
+    <div class="modal-body">
+      <div class="toggle-group">
+        <button class="toggle-btn active" id="t-single" onclick="toggleMode('single')">Single Day</button>
+        <button class="toggle-btn" id="t-range" onclick="toggleMode('range')">Date Range</button>
+      </div>
+      <div class="form-group"><label class="form-label">Leave Type</label>
+        <select id="l-type" class="form-control"><option value="annual">Annual</option><option value="sick">Sick</option><option value="personal">Personal</option><option value="unpaid">Unpaid</option><option value="other">Other</option></select>
+      </div>
+      <div class="form-row">
+        <div class="form-group mb-0"><label class="form-label">Start Date</label><input type="date" id="l-start" class="form-control"></div>
+        <div class="form-group mb-0" id="end-grp"><label class="form-label">End Date</label><input type="date" id="l-end" class="form-control"></div>
+      </div>
+      <div class="form-group" style="margin-top:20px"><label class="form-label">Reason</label><textarea id="l-reason" class="form-control" rows="2"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('apply-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="applyLeave()">Submit</button>
+    </div>
+  </div>
+</div>
+
+<!-- Reject Modal -->
+<div class="modal-overlay" id="reject-modal">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-header"><span class="modal-title">Reject Leave</span><button class="modal-close" onclick="closeModal('reject-modal')">×</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Reason for Rejection</label><textarea id="reject-reason" class="form-control" rows="3" placeholder="Optional reason..."></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('reject-modal')">Cancel</button>
+      <button class="btn btn-danger" onclick="confirmReject()">Reject</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script>
+let currentTab = 'team';
+let rejectId = null;
+let singleMode = true;
+
+function toggleMode(m) {
+  singleMode = m === 'single';
+  document.getElementById('t-single').classList.toggle('active', singleMode);
+  document.getElementById('t-range').classList.toggle('active', !singleMode);
+  document.getElementById('end-grp').style.display = singleMode ? 'none' : '';
+}
+toggleMode('single');
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.toggle('active', (i===0) === (tab==='team')));
+  loadLeaves();
+}
+
+async function loadLeaves() {
+  try {
+    const scope = currentTab === 'team' ? '?scope=team' : '?scope=own';
+    const leaves = await api('GET', '/leaves' + scope);
+    const thead = document.getElementById('table-head');
+    const tbody = document.getElementById('leaves-tbody');
+
+    if (currentTab === 'team') {
+      thead.innerHTML = '<tr><th>Employee</th><th>Type</th><th>From</th><th>To</th><th>Days</th><th>Status</th><th>Applied</th><th>Actions</th></tr>';
+      tbody.innerHTML = leaves.length ? leaves.map(l => `<tr>
+        <td>${l.userId?.name}</td>
+        <td style="text-transform:capitalize">${l.type}</td>
+        <td>${fmtDate(l.startDate)}</td><td>${fmtDate(l.endDate)}</td>
+        <td>${l.days}</td>
+        <td>${statusBadge(l.status)}</td>
+        <td style="font-size:12px;color:var(--text-muted)">${fmtDate(l.createdAt)}</td>
+        <td>${l.status==='pending' ? `
+          <button class="btn btn-success btn-sm" onclick="actLeave('${l._id}','approve')">✓ Approve</button>
+          <button class="btn btn-danger btn-sm" onclick="openReject('${l._id}')">✗ Reject</button>` : '—'}</td>
+      </tr>`).join('') : '<tr><td colspan="8"><div class="empty-state"><div class="empty-icon"><i class="bx bxs-plane-alt"></i></div><p>No team leaves</p></div></td></tr>';
+    } else {
+      thead.innerHTML = '<tr><th>Type</th><th>From</th><th>To</th><th>Days</th><th>Status</th><th>Applied</th><th>Action</th></tr>';
+      tbody.innerHTML = leaves.length ? leaves.map(l => `<tr>
+        <td style="text-transform:capitalize">${l.type}</td>
+        <td>${fmtDate(l.startDate)}</td><td>${fmtDate(l.endDate)}</td>
+        <td>${l.days}</td>
+        <td>${statusBadge(l.status)}</td>
+        <td style="font-size:12px;color:var(--text-muted)">${fmtDate(l.createdAt)}</td>
+        <td>${l.status==='pending' ? `<button class="btn btn-danger btn-sm" onclick="deleteLeave('${l._id}')">Delete</button>` : '—'}</td>
+      </tr>`).join('') : '<tr><td colspan="7"><div class="empty-state"><div class="empty-icon"><i class="bx bxs-plane-alt"></i></div><p>No personal leaves</p></div></td></tr>';
+    }
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+async function actLeave(id, action) {
+  try { await api('PATCH', `/leaves/${id}/action`, { action }); toast(`Leave ${action}d`, 'success'); loadLeaves(); }
+  catch(e) { toast(e.message, 'error'); }
+}
+
+function openReject(id) { rejectId = id; document.getElementById('reject-reason').value = ''; openModal('reject-modal'); }
+async function confirmReject() {
+  const reason = document.getElementById('reject-reason').value;
+  try { await api('PATCH', `/leaves/${rejectId}/action`, { action: 'reject', rejectionReason: reason }); toast('Leave rejected', 'success'); closeModal('reject-modal'); loadLeaves(); }
+  catch(e) { toast(e.message, 'error'); }
+}
+
+async function applyLeave() {
+  const type = document.getElementById('l-type').value;
+  const start = document.getElementById('l-start').value;
+  const end = singleMode ? start : document.getElementById('l-end').value;
+  const reason = document.getElementById('l-reason').value;
+  if (!start) return toast('Select a date', 'error');
+  try {
+    await api('POST', '/leaves', { type, startDate: start, endDate: end, reason });
+    toast('Leave applied!', 'success'); closeModal('apply-modal'); loadLeaves();
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+async function deleteLeave(id) {
+  if (!confirm('Delete this leave?')) return;
+  try { await api('DELETE', `/leaves/${id}`); toast('Deleted', 'success'); loadLeaves(); }
+  catch(e) { toast(e.message, 'error'); }
+}
+
+loadLeaves();
+</script>
+</body></html>

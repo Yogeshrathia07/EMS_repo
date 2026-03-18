@@ -1,0 +1,265 @@
+<%- include('../partials/head', {title: 'Profile'}) %>
+<div class="app-layout">
+  <%- include('../partials/sidebar-employee') %>
+  <div class="main-content">
+    <header class="page-header">
+      <div class="flex items-center gap-3">
+        <button class="mobile-menu-btn" onclick="openSidebar()"><i class="bx bx-menu"></i></button>
+        <div>
+          <div class="page-title">My Profile</div>
+          <div class="page-subtitle">Manage your personal information</div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-primary" onclick="openModal('edit-modal')">✏️ Edit Profile</button>
+      </div>
+    </header>
+    <div class="page-body">
+      <div class="profile-layout">
+        <!-- Left: Profile Card -->
+        <div>
+          <div class="profile-card">
+            <div class="profile-card-header">
+              <div class="profile-avatar" id="profile-avatar">U
+                <div class="profile-avatar-edit" title="Change photo">📷</div>
+              </div>
+              <div class="profile-name" id="profile-name">Loading...</div>
+              <div class="profile-job" id="profile-job">—</div>
+              <div class="profile-status-badge">Active</div>
+            </div>
+            <div class="profile-info-list">
+              <div class="profile-info-item">
+                <div class="profile-info-icon"><i class="bx bxs-envelope"></i></div>
+                <div>
+                  <div class="profile-info-label">Email</div>
+                  <div class="profile-info-value" id="profile-email">—</div>
+                </div>
+              </div>
+              <div class="profile-info-item">
+                <div class="profile-info-icon"><i class="bx bxs-phone"></i></div>
+                <div>
+                  <div class="profile-info-label">Phone</div>
+                  <div class="profile-info-value" id="profile-phone">—</div>
+                </div>
+              </div>
+              <div class="profile-info-item">
+                <div class="profile-info-icon"><i class="bx bxs-building"></i></div>
+                <div>
+                  <div class="profile-info-label">Department</div>
+                  <div class="profile-info-value" id="profile-dept">—</div>
+                </div>
+              </div>
+              <div class="profile-info-item">
+                <div class="profile-info-icon"><i class="bx bxs-user-circle"></i></div>
+                <div>
+                  <div class="profile-info-label">Role</div>
+                  <div class="profile-info-value" id="profile-role">—</div>
+                </div>
+              </div>
+              <div class="profile-info-item">
+                <div class="profile-info-icon"><i class="bx bxs-user-badge"></i></div>
+                <div>
+                  <div class="profile-info-label">Reports To</div>
+                  <div class="profile-info-value" id="profile-manager">—</div>
+                </div>
+              </div>
+            </div>
+            <div class="profile-social">
+              <div class="social-btn" title="LinkedIn">in</div>
+              <div class="social-btn" title="Teams"><i class="bx bxs-circle" style="color:var(--purple)"></i></div>
+              <div class="social-btn" title="Slack">💬</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Details -->
+        <div>
+          <!-- Basic Information -->
+          <div class="info-section">
+            <div class="info-section-header">
+              <div class="info-section-title">Basic Information</div>
+              <span class="badge badge-approved">Verified</span>
+            </div>
+            <div class="info-section-body">
+              <div class="detail-grid">
+                <div class="detail-item">
+                  <div class="detail-label">Hire Date</div>
+                  <div class="detail-value" id="detail-hire">—</div>
+                </div>
+                <div class="detail-item">
+                  <div class="detail-label">Employee ID</div>
+                  <div class="detail-value" id="detail-id">—</div>
+                </div>
+                <div class="detail-item">
+                  <div class="detail-label">Employment Type</div>
+                  <div class="detail-value">Full-Time</div>
+                </div>
+                <div class="detail-item">
+                  <div class="detail-label">Work Location</div>
+                  <div class="detail-value">Remote / Office</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Occupation Information -->
+          <div class="info-section">
+            <div class="info-section-header">
+              <div class="info-section-title">Occupation Information</div>
+            </div>
+            <div class="info-section-body">
+              <div class="info-chips" id="info-chips">
+                <div class="info-chip">
+                  <div class="info-chip-icon"><i class="bx bxs-briefcase"></i></div>
+                  <span id="chip-type">Full-Time</span>
+                </div>
+                <div class="info-chip">
+                  <div class="info-chip-icon">🏗️</div>
+                  <span id="chip-dept">Engineering</span>
+                </div>
+                <div class="info-chip">
+                  <div class="info-chip-icon">📍</div>
+                  <span>Remote</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Onboarding Checklist -->
+          <div class="info-section">
+            <div class="info-section-header">
+              <div class="info-section-title">Onboarding Tasks</div>
+              <span class="text-sm text-muted" id="onboarding-progress">3/5 completed</span>
+            </div>
+            <div class="info-section-body">
+              <div class="task-list">
+                <div class="task-item">
+                  <div class="task-check done">✓</div>
+                  <div class="task-content">
+                    <div class="task-title done">Sign employment contract</div>
+                    <div class="task-meta">Completed on joining date</div>
+                  </div>
+                  <div class="task-assignee">
+                    <div class="task-assignee-avatar">HR</div>
+                    HR Team
+                  </div>
+                </div>
+                <div class="task-item">
+                  <div class="task-check done">✓</div>
+                  <div class="task-content">
+                    <div class="task-title done">Set up workstation & software</div>
+                    <div class="task-meta">IT setup completed</div>
+                  </div>
+                  <div class="task-assignee">
+                    <div class="task-assignee-avatar">IT</div>
+                    IT Team
+                  </div>
+                </div>
+                <div class="task-item">
+                  <div class="task-check done">✓</div>
+                  <div class="task-content">
+                    <div class="task-title done">Meeting with HR manager</div>
+                    <div class="task-meta">Policy & benefits orientation</div>
+                  </div>
+                  <div class="task-assignee">
+                    <div class="task-assignee-avatar">JA</div>
+                    John Admin
+                  </div>
+                </div>
+                <div class="task-item">
+                  <div class="task-check"></div>
+                  <div class="task-content">
+                    <div class="task-title">Office tour for employee</div>
+                    <div class="task-meta">Due: Mar 20, 2026</div>
+                  </div>
+                  <div class="task-assignee">
+                    <div class="task-assignee-avatar">SM</div>
+                    Sara Manager
+                  </div>
+                </div>
+                <div class="task-item">
+                  <div class="task-check"></div>
+                  <div class="task-content">
+                    <div class="task-title">Review company vision & values</div>
+                    <div class="task-meta">Due: Mar 25, 2026</div>
+                  </div>
+                  <div class="task-assignee">
+                    <div class="task-assignee-avatar">SM</div>
+                    Sara Manager
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Profile Modal -->
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Edit Profile</span>
+      <button class="modal-close" onclick="closeModal('edit-modal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Full Name</label><input type="text" id="edit-name" class="form-control"></div>
+        <div class="form-group"><label class="form-label">Phone</label><input type="text" id="edit-phone" class="form-control" placeholder="+1 555 000 0000"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Department</label><input type="text" id="edit-dept" class="form-control"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('edit-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveProfile()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script>
+const u = getUser();
+if (u) {
+  document.getElementById('sidebar-user-name').textContent = u.name;
+  document.getElementById('sidebar-user-role').textContent = u.role;
+  document.getElementById('sidebar-user-avatar').textContent = u.name.charAt(0);
+}
+
+async function loadProfile() {
+  try {
+    const user = await api('GET', '/users/me');
+    document.getElementById('profile-avatar').innerHTML = user.name.charAt(0) + '<div class="profile-avatar-edit">📷</div>';
+    document.getElementById('profile-name').textContent = user.name;
+    document.getElementById('profile-job').textContent = user.department ? user.department + ' · ' + user.role : user.role;
+    document.getElementById('profile-email').textContent = user.email;
+    document.getElementById('profile-phone').textContent = user.phone || 'Not set';
+    document.getElementById('profile-dept').textContent = user.department || 'Not assigned';
+    document.getElementById('profile-role').textContent = user.role.charAt(0).toUpperCase() + user.role.slice(1);
+    document.getElementById('profile-manager').textContent = user.managerId?.name || 'Direct Report';
+    document.getElementById('detail-id').textContent = '#EMP-' + String(user.id).padStart(4, '0');
+    document.getElementById('chip-dept').textContent = user.department || 'General';
+    document.getElementById('edit-name').value = user.name;
+    document.getElementById('edit-phone').value = user.phone || '';
+    document.getElementById('edit-dept').value = user.department || '';
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+async function saveProfile() {
+  try {
+    const u = getUser();
+    await api('PUT', `/users/${u.id}`, {
+      name: document.getElementById('edit-name').value,
+      phone: document.getElementById('edit-phone').value,
+      department: document.getElementById('edit-dept').value,
+    });
+    toast('Profile updated!', 'success');
+    closeModal('edit-modal');
+    loadProfile();
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+loadProfile();
+</script>
+</body></html>

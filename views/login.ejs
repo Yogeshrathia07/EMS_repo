@@ -1,0 +1,142 @@
+<%- include('partials/head', { title: 'Login' }) %>
+
+<div class="min-h-screen flex bg-slate-50">
+  <!-- Left Panel -->
+  <div class="flex-1 hidden lg:flex items-center justify-center p-10 bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-800 relative overflow-hidden">
+    <div class="absolute inset-0 opacity-10">
+      <div class="absolute top-20 left-20 w-72 h-72 bg-white rounded-full blur-3xl"></div>
+      <div class="absolute bottom-20 right-20 w-96 h-96 bg-violet-300 rounded-full blur-3xl"></div>
+    </div>
+    <div class="relative z-10 max-w-md">
+      <h1 class="text-[42px] font-black text-white leading-[1.1] tracking-tight mb-4">Manage your<br>workforce<br>smarter.</h1>
+      <p class="text-base text-indigo-100 leading-relaxed">A complete HR & CRM platform for modern teams. Track time, manage leaves, run payroll and grow your business.</p>
+      <div class="mt-10 flex flex-col gap-4">
+        <div class="flex items-center gap-3.5 text-indigo-100 text-sm">
+          <div class="w-10 h-10 bg-white/10 border border-white/20 rounded-xl flex items-center justify-center flex-shrink-0"><i class="bx bxs-group text-lg text-white"></i></div>
+          <span><strong class="text-white">HRM Suite</strong> — Full employee lifecycle management</span>
+        </div>
+        <div class="flex items-center gap-3.5 text-indigo-100 text-sm">
+          <div class="w-10 h-10 bg-white/10 border border-white/20 rounded-xl flex items-center justify-center flex-shrink-0"><i class="bx bxs-briefcase text-lg text-white"></i></div>
+          <span><strong class="text-white">CRM</strong> — Contacts, deals & pipeline tracking</span>
+        </div>
+        <div class="flex items-center gap-3.5 text-indigo-100 text-sm">
+          <div class="w-10 h-10 bg-white/10 border border-white/20 rounded-xl flex items-center justify-center flex-shrink-0"><i class="bx bxs-wallet text-lg text-white"></i></div>
+          <span><strong class="text-white">Payroll</strong> — Automated salary split & calculations</span>
+        </div>
+        <div class="flex items-center gap-3.5 text-indigo-100 text-sm">
+          <div class="w-10 h-10 bg-white/10 border border-white/20 rounded-xl flex items-center justify-center flex-shrink-0"><i class="bx bxs-circle text-lg text-violet-300"></i></div>
+          <span><strong class="text-white">MS Teams</strong> — Auto working hours from meetings</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Panel -->
+  <div class="w-full lg:w-[480px] flex items-center justify-center p-6 sm:p-10">
+    <div class="w-full max-w-sm">
+      <div class="flex items-center gap-2.5 mb-8">
+        <div class="w-11 h-11 bg-indigo-600 rounded-[14px] flex items-center justify-center shadow-lg shadow-indigo-200"><i class="bx bxs-group text-xl text-white"></i></div>
+        <div class="text-xl font-black text-slate-900 tracking-tight">EMS Platform</div>
+      </div>
+      <h2 class="text-2xl font-extrabold text-slate-900 mb-1.5 tracking-tight">Welcome back</h2>
+      <p class="text-sm text-slate-400 mb-8">Sign in to your account to continue</p>
+
+      <div id="login-error" class="hidden mb-4 px-4 py-3 bg-red-50 border-l-3 border-red-500 rounded-lg text-red-600 text-[13px] font-medium items-center gap-2"></div>
+
+      <div class="mb-4">
+        <label class="block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide">Email Address</label>
+        <div class="relative">
+          <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"><i class="bx bxs-envelope text-lg"></i></span>
+          <input type="email" id="email" class="form-control pl-11" placeholder="you@company.com" autocomplete="email">
+        </div>
+      </div>
+      <div class="mb-2">
+        <label class="block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide">Password</label>
+        <div class="relative">
+          <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"><i class="bx bxs-lock text-lg"></i></span>
+          <input type="password" id="password" class="form-control pl-11" placeholder="Your password" autocomplete="current-password">
+        </div>
+      </div>
+
+      <button class="w-full mt-4 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-[15px] rounded-xl shadow-lg shadow-indigo-200 transition-all hover:-translate-y-0.5 cursor-pointer flex items-center justify-center" id="login-btn" onclick="doLogin()">
+        Sign In
+      </button>
+
+      <div class="mt-6 p-4 bg-slate-50 border border-slate-200 rounded-xl">
+        <h4 class="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2.5">Demo Accounts (password: Admin@123)</h4>
+        <div class="flex items-center justify-between py-2 px-2.5 rounded-lg cursor-pointer hover:bg-white transition-colors" onclick="fillDemo('superadmin@ems.com')">
+          <span class="text-[11px] font-bold text-slate-600">🔴 Super Admin</span>
+          <span class="text-[11px] text-slate-400 font-mono">superadmin@ems.com</span>
+        </div>
+        <div class="flex items-center justify-between py-2 px-2.5 rounded-lg cursor-pointer hover:bg-white transition-colors" onclick="fillDemo('admin@demo.com')">
+          <span class="text-[11px] font-bold text-slate-600">🟠 Admin</span>
+          <span class="text-[11px] text-slate-400 font-mono">admin@demo.com</span>
+        </div>
+        <div class="flex items-center justify-between py-2 px-2.5 rounded-lg cursor-pointer hover:bg-white transition-colors" onclick="fillDemo('manager@demo.com')">
+          <span class="text-[11px] font-bold text-slate-600">🟡 Manager</span>
+          <span class="text-[11px] text-slate-400 font-mono">manager@demo.com</span>
+        </div>
+        <div class="flex items-center justify-between py-2 px-2.5 rounded-lg cursor-pointer hover:bg-white transition-colors" onclick="fillDemo('employee@demo.com')">
+          <span class="text-[11px] font-bold text-slate-600">🟢 Employee</span>
+          <span class="text-[11px] text-slate-400 font-mono">employee@demo.com</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function fillDemo(email) {
+  document.getElementById('email').value = email;
+  document.getElementById('password').value = 'Admin@123';
+}
+
+async function doLogin() {
+  const btn = document.getElementById('login-btn');
+  const errEl = document.getElementById('login-error');
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  errEl.style.display = 'none';
+
+  if (!email || !password) {
+    errEl.textContent = 'Please fill in all fields.';
+    errEl.style.display = 'flex';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Signing in...';
+
+  try {
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Login failed');
+
+    localStorage.setItem('ems_token', data.token);
+    localStorage.setItem('ems_user', JSON.stringify(data.user));
+
+    const role = data.user.role;
+    const routes = { superadmin: '/superadmin/dashboard', admin: '/admin/dashboard', manager: '/manager/dashboard', employee: '/employee/dashboard' };
+    window.location.href = routes[role] || '/login';
+  } catch (err) {
+    errEl.textContent = err.message;
+    errEl.style.display = 'flex';
+    btn.disabled = false;
+    btn.innerHTML = 'Sign In';
+  }
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+
+const token = localStorage.getItem('ems_token');
+const user = JSON.parse(localStorage.getItem('ems_user') || 'null');
+if (token && user) {
+  const routes = { superadmin: '/superadmin/dashboard', admin: '/admin/dashboard', manager: '/manager/dashboard', employee: '/employee/dashboard' };
+  window.location.href = routes[user.role] || '/login';
+}
+</script>
+</body></html>

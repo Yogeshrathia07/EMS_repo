@@ -1,0 +1,129 @@
+<%- include('../partials/head', {title: 'Performance'}) %>
+<div class="app-layout">
+  <%- include('../partials/sidebar-admin') %>
+  <div class="main-content">
+    <header class="page-header">
+      <div class="flex items-center gap-3">
+        <button class="mobile-menu-btn" onclick="openSidebar()"><i class="bx bx-menu"></i></button>
+        <div><div class="page-title">HRM — Performance</div><div class="page-subtitle">Employee performance reviews</div></div>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-primary" onclick="openModal('review-modal')">＋ Add Review</button>
+      </div>
+    </header>
+    <div class="page-body">
+      <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);">
+        <div class="stat-card"><div class="stat-icon green"><i class="bx bxs-star"></i></div><div><div class="stat-value">4.2</div><div class="stat-label">Avg Rating</div></div></div>
+        <div class="stat-card"><div class="stat-icon blue"><i class="bx bxs-notepad"></i></div><div><div class="stat-value" id="s-reviews">0</div><div class="stat-label">Reviews This Quarter</div></div></div>
+        <div class="stat-card"><div class="stat-icon purple"><i class="bx bxs-trophy"></i></div><div><div class="stat-value" id="s-top">0</div><div class="stat-label">Top Performers</div></div></div>
+        <div class="stat-card"><div class="stat-icon orange"><i class="bx bxs-bar-chart-alt-2"></i></div><div><div class="stat-value" id="s-improve">0</div><div class="stat-label">Need Improvement</div></div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-title">Performance Reviews</div></div>
+        <div style="padding:0;">
+          <div class="table-wrapper">
+            <table>
+              <thead><tr><th>Employee</th><th>Department</th><th>Period</th><th>Rating</th><th>Goals Met</th><th>Status</th><th>Actions</th></tr></thead>
+              <tbody id="perf-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="review-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Add Performance Review</span>
+      <button class="modal-close" onclick="closeModal('review-modal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Employee</label><input type="text" id="r-emp" class="form-control" placeholder="Employee name"></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Period</label><input type="text" id="r-period" class="form-control" placeholder="Q1 2026"></div>
+        <div class="form-group">
+          <label class="form-label">Rating (1-5)</label>
+          <select id="r-rating" class="form-control">
+            <option value="5">★★★★★ Outstanding</option>
+            <option value="4">★★★★ Exceeds Expectations</option>
+            <option value="3" selected>★★★ Meets Expectations</option>
+            <option value="2">★★ Below Expectations</option>
+            <option value="1">★ Needs Improvement</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group"><label class="form-label">Goals Met (%)</label><input type="number" id="r-goals" class="form-control" placeholder="85" min="0" max="100"></div>
+      <div class="form-group"><label class="form-label">Comments</label><textarea id="r-comments" class="form-control" rows="3" placeholder="Performance summary..."></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('review-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveReview()">Save Review</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script>
+let reviews = [
+  { id:1, employee:'Alex Employee', dept:'Engineering', period:'Q4 2025', rating:4, goals:88, status:'completed' },
+  { id:2, employee:'Bob Smith', dept:'Engineering', period:'Q4 2025', rating:3, goals:72, status:'completed' },
+  { id:3, employee:'Carol Jones', dept:'Design', period:'Q4 2025', rating:5, goals:95, status:'completed' },
+  { id:4, employee:'Sarah Manager', dept:'Engineering', period:'Q1 2026', rating:4, goals:90, status:'pending' },
+];
+
+const u = getUser();
+if (u) {
+  document.getElementById('sidebar-user-name').textContent = u.name;
+  document.getElementById('sidebar-user-role').textContent = u.role;
+  document.getElementById('sidebar-user-avatar').textContent = u.name.charAt(0);
+}
+
+function stars(n) {
+  return '<i class="bx bxs-star"></i>'.repeat(n) + '<i class="bx bx-star"></i>'.repeat(5-n);
+}
+
+function render() {
+  document.getElementById('s-reviews').textContent = reviews.length;
+  document.getElementById('s-top').textContent = reviews.filter(r=>r.rating>=4).length;
+  document.getElementById('s-improve').textContent = reviews.filter(r=>r.rating<=2).length;
+
+  document.getElementById('perf-tbody').innerHTML = reviews.map(r=>`<tr>
+    <td><strong>${r.employee}</strong></td>
+    <td>${r.dept}</td>
+    <td>${r.period}</td>
+    <td><span title="${r.rating}/5">${stars(r.rating)}</span></td>
+    <td>
+      ${r.goals}%
+      <div class="progress-bar-wrap mt-2" style="width:80px">
+        <div class="progress-bar-fill ${r.goals>=80?'green':r.goals>=60?'':'red'}" style="width:${r.goals}%"></div>
+      </div>
+    </td>
+    <td>${statusBadge(r.status)}</td>
+    <td>
+      <button class="btn btn-ghost btn-sm" onclick="toast('View details coming soon','info')">View</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteReview(${r.id})">🗑️</button>
+    </td>
+  </tr>`).join('');
+}
+
+function saveReview() {
+  const emp = document.getElementById('r-emp').value;
+  if (!emp) return toast('Employee name required','error');
+  reviews.unshift({ id:Date.now(), employee:emp, dept:'General', period:document.getElementById('r-period').value, rating:parseInt(document.getElementById('r-rating').value), goals:parseInt(document.getElementById('r-goals').value)||0, status:'pending' });
+  toast('Review saved!','success');
+  closeModal('review-modal');
+  render();
+}
+
+function deleteReview(id) {
+  if (!confirm('Delete review?')) return;
+  reviews = reviews.filter(r=>r.id!==id);
+  render();
+}
+
+render();
+</script>
+</body></html>

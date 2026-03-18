@@ -1,0 +1,119 @@
+<%- include('../partials/head', {title: 'Companies'}) %>
+<div class="app-layout">
+  <%- include('../partials/sidebar-superadmin') %>
+  <div class="main-content">
+    <header class="page-header">
+        <button class="mobile-menu-btn" onclick="openSidebar()"><i class="bx bx-menu"></i></button>
+      <div><div class="page-title"><i class="bx bxs-building"></i> Companies</div><div class="page-subtitle">Manage all registered companies</div></div>
+      <div class="header-actions">
+        <button class="btn btn-primary" onclick="openCreate()">＋ Add Company</button>
+      </div>
+    </header>
+    <div class="page-body">
+      <div class="card">
+        <div class="card-body">
+          <div class="table-wrapper">
+            <table>
+              <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Industry</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead>
+              <tbody id="co-tbody"><tr><td colspan="7" style="text-align:center;padding:40px"><span class="spinner"></span></td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="co-modal">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title" id="co-modal-title">Add Company</span><button class="modal-close" onclick="closeModal('co-modal')">×</button></div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Company Name</label><input type="text" id="c-name" class="form-control"></div>
+        <div class="form-group"><label class="form-label">Email</label><input type="email" id="c-email" class="form-control"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Phone</label><input type="text" id="c-phone" class="form-control"></div>
+        <div class="form-group"><label class="form-label">Industry</label><input type="text" id="c-industry" class="form-control"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Address</label><textarea id="c-address" class="form-control" rows="2"></textarea></div>
+      <div class="form-group"><label class="form-label">Status</label>
+        <select id="c-status" class="form-control"><option value="active">Active</option><option value="inactive">Inactive</option></select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('co-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveCompany()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script>
+let editId = null;
+
+async function loadCompanies() {
+  try {
+    const cos = await api('GET','/companies');
+    const tbody = document.getElementById('co-tbody');
+    if (!cos.length) { tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-icon"><i class="bx bxs-building"></i></div><p>No companies yet</p></div></td></tr>'; return; }
+    tbody.innerHTML = cos.map(c=>`<tr>
+      <td><strong>${c.name}</strong></td>
+      <td style="font-size:13px">${c.email}</td>
+      <td style="font-size:13px">${c.phone||'—'}</td>
+      <td>${c.industry||'—'}</td>
+      <td>${statusBadge(c.status)}</td>
+      <td style="font-size:12px;color:var(--text-muted)">${fmtDate(c.createdAt)}</td>
+      <td>
+        <button class="btn btn-ghost btn-sm" onclick="editCompany('${c._id}')">Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteCo('${c._id}')">Delete</button>
+      </td>
+    </tr>`).join('');
+  } catch(e) { toast(e.message,'error'); }
+}
+
+function openCreate() {
+  editId = null;
+  document.getElementById('co-modal-title').textContent = 'Add Company';
+  ['c-name','c-email','c-phone','c-industry','c-address'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('c-status').value = 'active';
+  openModal('co-modal');
+}
+
+async function editCompany(id) {
+  try {
+    const cos = await api('GET','/companies');
+    const c = cos.find(x=>x._id===id);
+    if (!c) return;
+    editId = id;
+    document.getElementById('co-modal-title').textContent = 'Edit Company';
+    document.getElementById('c-name').value = c.name;
+    document.getElementById('c-email').value = c.email;
+    document.getElementById('c-phone').value = c.phone||'';
+    document.getElementById('c-industry').value = c.industry||'';
+    document.getElementById('c-address').value = c.address||'';
+    document.getElementById('c-status').value = c.status;
+    openModal('co-modal');
+  } catch(e) { toast(e.message,'error'); }
+}
+
+async function saveCompany() {
+  const body = { name: document.getElementById('c-name').value, email: document.getElementById('c-email').value, phone: document.getElementById('c-phone').value, industry: document.getElementById('c-industry').value, address: document.getElementById('c-address').value, status: document.getElementById('c-status').value };
+  if (!body.name||!body.email) return toast('Name and email required','error');
+  try {
+    if (editId) await api('PUT',`/companies/${editId}`,body);
+    else await api('POST','/companies',body);
+    toast(editId?'Company updated':'Company created','success');
+    closeModal('co-modal'); loadCompanies();
+  } catch(e) { toast(e.message,'error'); }
+}
+
+async function deleteCo(id) {
+  if (!confirm('Delete this company?')) return;
+  try { await api('DELETE',`/companies/${id}`); toast('Deleted','success'); loadCompanies(); }
+  catch(e) { toast(e.message,'error'); }
+}
+
+loadCompanies();
+</script>
+</body></html>

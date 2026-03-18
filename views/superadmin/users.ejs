@@ -1,0 +1,154 @@
+<%- include('../partials/head', {title: 'All Users — SuperAdmin'}) %>
+<div class="app-layout">
+  <%- include('../partials/sidebar-superadmin') %>
+  <div class="main-content">
+    <header class="page-header">
+        <button class="mobile-menu-btn" onclick="openSidebar()"><i class="bx bx-menu"></i></button>
+      <div><div class="page-title"><i class="bx bxs-group"></i> All Users</div><div class="page-subtitle">System-wide user management</div></div>
+      <div class="header-actions">
+        <button class="btn btn-primary" onclick="openCreate()">＋ Add User</button>
+      </div>
+    </header>
+    <div class="page-body">
+      <div class="filter-row" style="display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap">
+        <select id="f-company" class="form-control" style="width:200px;max-width:calc(50% - 6px)" onchange="loadUsers()"><option value="">All Companies</option></select>
+        <select id="f-role" class="form-control" style="width:140px;max-width:calc(50% - 6px)" onchange="loadUsers()">
+          <option value="">All Roles</option>
+          <option value="admin">Admin</option>
+          <option value="manager">Manager</option>
+          <option value="employee">Employee</option>
+        </select>
+      </div>
+      <div class="card">
+        <div class="card-body">
+          <div class="table-wrapper">
+            <table>
+              <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Company</th><th>Status</th><th>Joined</th><th>Actions</th></tr></thead>
+              <tbody id="users-tbody"><tr><td colspan="7" style="text-align:center;padding:40px"><span class="spinner"></span></td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="user-modal">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title" id="u-modal-title">Add User</span><button class="modal-close" onclick="closeModal('user-modal')">×</button></div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Name</label><input type="text" id="u-name" class="form-control"></div>
+        <div class="form-group"><label class="form-label">Email</label><input type="email" id="u-email" class="form-control"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Role</label>
+          <select id="u-role" class="form-control">
+            <option value="admin">Admin</option>
+            <option value="manager">Manager</option>
+            <option value="employee">Employee</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Company</label><select id="u-company" class="form-control"><option value="">Select company...</option></select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Base Salary</label><input type="number" id="u-salary" class="form-control"></div>
+        <div class="form-group"><label class="form-label">Status</label><select id="u-status" class="form-control"><option value="active">Active</option><option value="inactive">Inactive</option></select></div>
+      </div>
+      <div class="form-group"><label class="form-label">Password <span style="color:var(--text-muted)">(default: Admin@123)</span></label><input type="password" id="u-pass" class="form-control" placeholder="Leave blank for default"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('user-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveUser()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script>
+let editId = null, allUsers = [], companies = [];
+
+async function init() {
+  try {
+    companies = await api('GET','/companies');
+    const coSel = document.getElementById('f-company');
+    coSel.innerHTML = '<option value="">All Companies</option>' + companies.map(c=>`<option value="${c._id}">${c.name}</option>`).join('');
+    const uCoSel = document.getElementById('u-company');
+    uCoSel.innerHTML = '<option value="">Select company...</option>' + companies.map(c=>`<option value="${c._id}">${c.name}</option>`).join('');
+    loadUsers();
+  } catch(e) { toast(e.message,'error'); }
+}
+
+async function loadUsers() {
+  try {
+    allUsers = await api('GET','/users');
+    let filtered = allUsers;
+    const fCo = document.getElementById('f-company').value;
+    const fRole = document.getElementById('f-role').value;
+    if (fCo) filtered = filtered.filter(u=>u.companyId?._id===fCo||u.companyId===fCo);
+    if (fRole) filtered = filtered.filter(u=>u.role===fRole);
+
+    const tbody = document.getElementById('users-tbody');
+    if (!filtered.length) { tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-icon"><i class="bx bxs-group"></i></div><p>No users found</p></div></td></tr>'; return; }
+    tbody.innerHTML = filtered.map(u=>`<tr>
+      <td><strong>${u.name}</strong></td>
+      <td style="font-size:13px">${u.email}</td>
+      <td>${roleBadge(u.role)}</td>
+      <td style="font-size:13px">${u.companyId?.name||'—'}</td>
+      <td>${statusBadge(u.status)}</td>
+      <td style="font-size:12px;color:var(--text-muted)">${fmtDate(u.createdAt)}</td>
+      <td>
+        <button class="btn btn-ghost btn-sm" onclick="editUser('${u._id}')">Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="delUser('${u._id}')">Delete</button>
+      </td>
+    </tr>`).join('');
+  } catch(e) { toast(e.message,'error'); }
+}
+
+function openCreate() {
+  editId = null;
+  document.getElementById('u-modal-title').textContent = 'Add User';
+  ['u-name','u-email','u-pass'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('u-role').value = 'employee';
+  document.getElementById('u-company').value = '';
+  document.getElementById('u-salary').value = '';
+  document.getElementById('u-status').value = 'active';
+  openModal('user-modal');
+}
+
+async function editUser(id) {
+  const u = allUsers.find(x=>x._id===id);
+  if (!u) return;
+  editId = id;
+  document.getElementById('u-modal-title').textContent = 'Edit User';
+  document.getElementById('u-name').value = u.name;
+  document.getElementById('u-email').value = u.email;
+  document.getElementById('u-role').value = u.role;
+  document.getElementById('u-company').value = u.companyId?._id||u.companyId||'';
+  document.getElementById('u-salary').value = u.baseSalary||'';
+  document.getElementById('u-status').value = u.status;
+  document.getElementById('u-pass').value = '';
+  openModal('user-modal');
+}
+
+async function saveUser() {
+  const body = { name:document.getElementById('u-name').value, email:document.getElementById('u-email').value, role:document.getElementById('u-role').value, companyId:document.getElementById('u-company').value, baseSalary:parseFloat(document.getElementById('u-salary').value)||0, status:document.getElementById('u-status').value };
+  const pass = document.getElementById('u-pass').value;
+  if (pass) body.password = pass;
+  try {
+    if (editId) await api('PUT',`/users/${editId}`,body);
+    else await api('POST','/users',body);
+    toast(editId?'User updated':'User created','success');
+    closeModal('user-modal'); loadUsers();
+  } catch(e) { toast(e.message,'error'); }
+}
+
+async function delUser(id) {
+  if (!confirm('Delete this user?')) return;
+  try { await api('DELETE',`/users/${id}`); toast('Deleted','success'); loadUsers(); }
+  catch(e) { toast(e.message,'error'); }
+}
+
+init();
+</script>
+</body></html>
