@@ -22,6 +22,7 @@ exports.getLeaves = async (req, res) => {
       const companyUsers = await User.findAll({ where: { companyId }, attributes: ['id'] });
       where.userId = { [Op.in]: companyUsers.map(u => u.id) };
     }
+    // superadmin sees all — no where filter needed
 
     const leaves = await Leave.findAll({
       where,
@@ -67,17 +68,23 @@ exports.actionLeave = async (req, res) => {
     const actor = req.user;
     const submitter = leave.user;
 
+    // Nobody can approve their own leave
+    if (submitter.id === actor.id) {
+      return res.status(403).json({ message: 'Cannot approve your own leave' });
+    }
+
+    // Manager can only approve their direct reports (employees, not other managers)
     if (actor.role === 'manager') {
-      if (submitter.id === actor.id) {
-        return res.status(403).json({ message: 'Cannot approve your own leave' });
-      }
       if (submitter.role === 'manager') {
-        return res.status(403).json({ message: 'Cannot approve another manager\'s leave' });
+        return res.status(403).json({ message: 'Cannot approve another manager\'s leave. Needs admin or superadmin approval.' });
       }
       if (submitter.managerId !== actor.id) {
         return res.status(403).json({ message: 'Not your team member' });
       }
     }
+
+    // Admin can approve anyone in their company (including managers)
+    // Superadmin can approve anyone — no restrictions
 
     leave.status = action === 'approve' ? 'approved' : 'rejected';
     leave.approvedBy = actor.id;
@@ -101,7 +108,7 @@ exports.deleteLeave = async (req, res) => {
   try {
     const leave = await Leave.findByPk(req.params.id);
     if (!leave) return res.status(404).json({ message: 'Leave not found' });
-    if (leave.userId !== req.user.id && req.user.role !== 'admin') {
+    if (leave.userId !== req.user.id && req.user.role !== 'admin' && req.user.role !== 'superadmin') {
       return res.status(403).json({ message: 'Access denied' });
     }
     if (leave.status !== 'pending') return res.status(400).json({ message: 'Cannot delete processed leave' });

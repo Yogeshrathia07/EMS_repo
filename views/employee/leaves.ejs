@@ -167,7 +167,7 @@ function renderLeaves() {
     <td><span style="font-weight:700;font-size:15px;">${l.days}</span> day${l.days!==1?'s':''}</td>
     <td class="truncate" style="max-width:140px;color:var(--text-secondary)">${l.reason || '—'}</td>
     <td>${statusBadge(l.status)}</td>
-    <td class="text-sm">${l.approvedBy ? l.approvedBy.name : '—'}</td>
+    <td class="text-sm">${l.approver ? l.approver.name : '—'}</td>
     <td class="text-sm text-muted">${fmtDate(l.createdAt)}</td>
     <td>${l.status === 'pending' ? `<button class="btn btn-danger btn-sm" onclick="deleteLeave('${l.id}')">Delete</button>` : '—'}</td>
   </tr>`).join('');

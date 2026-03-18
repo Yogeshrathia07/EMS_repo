@@ -107,7 +107,7 @@ async function loadUsers() {
   try {
     const users = await api('GET','/users');
     const sel = document.getElementById('g-user');
-    sel.innerHTML = '<option value="">Select employee...</option>' + users.map(u=>`<option value="${u._id}" data-salary="${u.baseSalary||0}">${u.name} (${u.role})</option>`).join('');
+    sel.innerHTML = '<option value="">Select employee...</option>' + users.map(u=>`<option value="${u.id}" data-salary="${u.baseSalary||0}">${u.name} (${u.role})</option>`).join('');
     sel.onchange = function() {
       const opt = this.options[this.selectedIndex];
       if (opt.dataset.salary) document.getElementById('g-base').value = opt.dataset.salary;
@@ -129,7 +129,7 @@ async function loadSalaries() {
     const tbody = document.getElementById('salary-tbody');
     if (!salaries.length) { tbody.innerHTML = '<tr><td colspan="10"><div class="empty-state"><div class="empty-icon"><i class="bx bxs-wallet"></i></div><p>No salary records found</p></div></td></tr>'; return; }
     tbody.innerHTML = salaries.map(s=>`<tr>
-      <td><strong>${s.userId?.name}</strong><br><span style="font-size:11px;color:var(--text-muted)">${s.userId?.role}</span></td>
+      <td><strong>${s.user?.name}</strong><br><span style="font-size:11px;color:var(--text-muted)">${s.user?.role}</span></td>
       <td>${MONTHS[s.month-1]} ${s.year}</td>
       <td>$${s.baseSalary.toLocaleString()}</td>
       <td style="color:var(--success)">+$${s.allowances.toLocaleString()}</td>
@@ -139,9 +139,9 @@ async function loadSalaries() {
       <td style="font-size:13px">${s.actualHours}/${s.expectedHours}h</td>
       <td>${statusBadge(s.status)}</td>
       <td style="display:flex;gap:6px;flex-wrap:wrap">
-        ${s.status!=='paid'?`<button class="btn btn-ghost btn-sm" onclick="openEdit('${s._id}')">Edit</button>`:''}
-        ${s.status==='finalized'?`<button class="btn btn-success btn-sm" onclick="pay('${s._id}')"><i class="bx bxs-wallet"></i> Pay</button>`:''}
-        ${s.status!=='paid'?`<button class="btn btn-danger btn-sm" onclick="delSal('${s._id}')">Del</button>`:''}
+        ${s.status!=='paid'?`<button class="btn btn-ghost btn-sm" onclick="openEdit('${s.id}')">Edit</button>`:''}
+        ${s.status==='finalized'?`<button class="btn btn-success btn-sm" onclick="pay('${s.id}')"><i class="bx bxs-wallet"></i> Pay</button>`:''}
+        ${s.status!=='paid'?`<button class="btn btn-danger btn-sm" onclick="delSal('${s.id}')">Del</button>`:''}
       </td>
     </tr>`).join('');
   } catch(e) { toast(e.message,'error'); }
@@ -167,7 +167,7 @@ async function genSalary() {
 async function openEdit(id) {
   try {
     const salaries = await api('GET','/salary');
-    const s = salaries.find(x=>x._id===id);
+    const s = salaries.find(x=>x.id===id);
     if (!s) return;
     editSalId = id;
     document.getElementById('e-base').value = s.baseSalary;

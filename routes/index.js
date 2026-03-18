@@ -18,14 +18,14 @@ router.delete('/users/:id', auth, requireRole('admin', 'superadmin'), userCtrl.d
 const leaveCtrl = require('../controllers/leaveController');
 router.get('/leaves', auth, leaveCtrl.getLeaves);
 router.post('/leaves', auth, leaveCtrl.createLeave);
-router.patch('/leaves/:id/action', auth, requireRole('manager', 'admin'), leaveCtrl.actionLeave);
+router.patch('/leaves/:id/action', auth, requireRole('manager', 'admin', 'superadmin'), leaveCtrl.actionLeave);
 router.delete('/leaves/:id', auth, leaveCtrl.deleteLeave);
 
 // Timesheets
 const tsCtrl = require('../controllers/timesheetController');
 router.get('/timesheets', auth, tsCtrl.getTimesheets);
 router.post('/timesheets', auth, tsCtrl.createTimesheet);
-router.patch('/timesheets/:id/action', auth, requireRole('manager', 'admin'), tsCtrl.actionTimesheet);
+router.patch('/timesheets/:id/action', auth, requireRole('manager', 'admin', 'superadmin'), tsCtrl.actionTimesheet);
 router.delete('/timesheets/:id', auth, tsCtrl.deleteTimesheet);
 
 // Salary

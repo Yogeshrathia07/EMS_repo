@@ -6,7 +6,7 @@
         <button class="mobile-menu-btn" onclick="openSidebar()"><i class="bx bx-menu"></i></button>
       <div><div class="page-title"><i class="bx bxs-plane-alt"></i> Leaves</div><div class="page-subtitle">Manage team leaves and your own</div></div>
       <div class="header-actions">
-        <button class="btn btn-primary" onclick="openModal('apply-modal')">＋ Apply My Leave</button>
+        <button class="btn btn-primary" onclick="openModal('apply-modal')"><i class="bx bx-plus"></i> Apply My Leave</button>
       </div>
     </header>
     <div class="page-body">
@@ -98,39 +98,40 @@ async function loadLeaves() {
     if (currentTab === 'team') {
       thead.innerHTML = '<tr><th>Employee</th><th>Type</th><th>From</th><th>To</th><th>Days</th><th>Status</th><th>Applied</th><th>Actions</th></tr>';
       tbody.innerHTML = leaves.length ? leaves.map(l => `<tr>
-        <td>${l.userId?.name}</td>
+        <td><strong>${l.user?.name||'—'}</strong></td>
         <td style="text-transform:capitalize">${l.type}</td>
         <td>${fmtDate(l.startDate)}</td><td>${fmtDate(l.endDate)}</td>
         <td>${l.days}</td>
         <td>${statusBadge(l.status)}</td>
         <td style="font-size:12px;color:var(--text-muted)">${fmtDate(l.createdAt)}</td>
         <td>${l.status==='pending' ? `
-          <button class="btn btn-success btn-sm" onclick="actLeave('${l._id}','approve')">✓ Approve</button>
-          <button class="btn btn-danger btn-sm" onclick="openReject('${l._id}')">✗ Reject</button>` : '—'}</td>
+          <button class="btn btn-success btn-sm" onclick="actLeave(${l.id},'approve')"><i class="bx bx-check"></i> Approve</button>
+          <button class="btn btn-danger btn-sm" onclick="openReject(${l.id})"><i class="bx bx-x"></i> Reject</button>` : '—'}</td>
       </tr>`).join('') : '<tr><td colspan="8"><div class="empty-state"><div class="empty-icon"><i class="bx bxs-plane-alt"></i></div><p>No team leaves</p></div></td></tr>';
     } else {
-      thead.innerHTML = '<tr><th>Type</th><th>From</th><th>To</th><th>Days</th><th>Status</th><th>Applied</th><th>Action</th></tr>';
+      thead.innerHTML = '<tr><th>Type</th><th>From</th><th>To</th><th>Days</th><th>Status</th><th>Approved By</th><th>Applied</th><th>Action</th></tr>';
       tbody.innerHTML = leaves.length ? leaves.map(l => `<tr>
         <td style="text-transform:capitalize">${l.type}</td>
         <td>${fmtDate(l.startDate)}</td><td>${fmtDate(l.endDate)}</td>
         <td>${l.days}</td>
         <td>${statusBadge(l.status)}</td>
+        <td class="text-sm">${l.approver ? l.approver.name : '—'}</td>
         <td style="font-size:12px;color:var(--text-muted)">${fmtDate(l.createdAt)}</td>
-        <td>${l.status==='pending' ? `<button class="btn btn-danger btn-sm" onclick="deleteLeave('${l._id}')">Delete</button>` : '—'}</td>
-      </tr>`).join('') : '<tr><td colspan="7"><div class="empty-state"><div class="empty-icon"><i class="bx bxs-plane-alt"></i></div><p>No personal leaves</p></div></td></tr>';
+        <td>${l.status==='pending' ? `<button class="btn btn-danger btn-sm" onclick="deleteLeave(${l.id})"><i class="bx bx-trash"></i> Delete</button>` : '—'}</td>
+      </tr>`).join('') : '<tr><td colspan="8"><div class="empty-state"><div class="empty-icon"><i class="bx bxs-plane-alt"></i></div><p>No personal leaves</p></div></td></tr>';
     }
   } catch(e) { toast(e.message, 'error'); }
 }
 
 async function actLeave(id, action) {
-  try { await api('PATCH', `/leaves/${id}/action`, { action }); toast(`Leave ${action}d`, 'success'); loadLeaves(); }
+  try { await api('PATCH', '/leaves/'+id+'/action', { action }); toast('Leave '+action+'d', 'success'); loadLeaves(); }
   catch(e) { toast(e.message, 'error'); }
 }
 
 function openReject(id) { rejectId = id; document.getElementById('reject-reason').value = ''; openModal('reject-modal'); }
 async function confirmReject() {
   const reason = document.getElementById('reject-reason').value;
-  try { await api('PATCH', `/leaves/${rejectId}/action`, { action: 'reject', rejectionReason: reason }); toast('Leave rejected', 'success'); closeModal('reject-modal'); loadLeaves(); }
+  try { await api('PATCH', '/leaves/'+rejectId+'/action', { action: 'reject', rejectionReason: reason }); toast('Leave rejected', 'success'); closeModal('reject-modal'); loadLeaves(); }
   catch(e) { toast(e.message, 'error'); }
 }
 
@@ -148,7 +149,7 @@ async function applyLeave() {
 
 async function deleteLeave(id) {
   if (!confirm('Delete this leave?')) return;
-  try { await api('DELETE', `/leaves/${id}`); toast('Deleted', 'success'); loadLeaves(); }
+  try { await api('DELETE', '/leaves/'+id); toast('Deleted', 'success'); loadLeaves(); }
   catch(e) { toast(e.message, 'error'); }
 }
 

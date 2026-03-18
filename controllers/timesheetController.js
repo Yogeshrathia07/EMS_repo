@@ -22,6 +22,7 @@ exports.getTimesheets = async (req, res) => {
       const companyUsers = await User.findAll({ where: { companyId }, attributes: ['id'] });
       where.userId = { [Op.in]: companyUsers.map(u => u.id) };
     }
+    // superadmin sees all — no where filter needed
 
     const timesheets = await Timesheet.findAll({
       where,
@@ -69,17 +70,23 @@ exports.actionTimesheet = async (req, res) => {
     const actor = req.user;
     const submitter = ts.user;
 
+    // Nobody can approve their own timesheet
+    if (submitter.id === actor.id) {
+      return res.status(403).json({ message: 'Cannot approve your own timesheet' });
+    }
+
+    // Manager can only approve their direct reports (employees, not other managers)
     if (actor.role === 'manager') {
-      if (submitter.id === actor.id) {
-        return res.status(403).json({ message: 'Cannot approve your own timesheet' });
-      }
       if (submitter.role === 'manager') {
-        return res.status(403).json({ message: 'Cannot approve another manager\'s timesheet' });
+        return res.status(403).json({ message: 'Cannot approve another manager\'s timesheet. Needs admin or superadmin approval.' });
       }
       if (submitter.managerId !== actor.id) {
         return res.status(403).json({ message: 'Not your team member' });
       }
     }
+
+    // Admin can approve anyone in their company (including managers)
+    // Superadmin can approve anyone — no restrictions
 
     ts.status = action === 'approve' ? 'approved' : 'rejected';
     ts.approvedBy = actor.id;
@@ -103,7 +110,7 @@ exports.deleteTimesheet = async (req, res) => {
   try {
     const ts = await Timesheet.findByPk(req.params.id);
     if (!ts) return res.status(404).json({ message: 'Timesheet not found' });
-    if (ts.userId !== req.user.id && req.user.role !== 'admin') {
+    if (ts.userId !== req.user.id && req.user.role !== 'admin' && req.user.role !== 'superadmin') {
       return res.status(403).json({ message: 'Access denied' });
     }
     if (ts.status !== 'pending') return res.status(400).json({ message: 'Cannot delete processed timesheet' });

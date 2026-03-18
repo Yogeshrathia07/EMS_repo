@@ -52,12 +52,12 @@ async function loadDashboard() {
       <div class="table-wrapper"><table>
         <thead><tr><th>Employee</th><th>Type</th><th>Days</th><th>Action</th></tr></thead>
         <tbody>${renderLeaves.map(l => `<tr>
-          <td>${l.userId?.name}</td>
+          <td>${l.user?.name||'—'}</td>
           <td style="text-transform:capitalize">${l.type}</td>
           <td>${l.days}</td>
           <td>
-            <button class="btn btn-success btn-sm" onclick="actLeave('${l._id}','approve')">✓</button>
-            <button class="btn btn-danger btn-sm" onclick="actLeave('${l._id}','reject')">✗</button>
+            <button class="btn btn-success btn-sm" onclick="actLeave(${l.id},'approve')">✓</button>
+            <button class="btn btn-danger btn-sm" onclick="actLeave(${l.id},'reject')">✗</button>
           </td>
         </tr>`).join('')}</tbody>
       </table></div>` : '<div class="empty-state"><div class="empty-icon"><i class="bx bxs-check-circle"></i></div><p>No pending leaves</p></div>';
@@ -67,12 +67,12 @@ async function loadDashboard() {
       <div class="table-wrapper"><table>
         <thead><tr><th>Employee</th><th>Week</th><th>Hours</th><th>Action</th></tr></thead>
         <tbody>${renderTs.map(t => `<tr>
-          <td>${t.userId?.name}</td>
+          <td>${t.user?.name||'—'}</td>
           <td style="font-size:12px">${fmtDate(t.weekStart)}</td>
           <td>${t.totalHours}h</td>
           <td>
-            <button class="btn btn-success btn-sm" onclick="actTs('${t._id}','approve')">✓</button>
-            <button class="btn btn-danger btn-sm" onclick="actTs('${t._id}','reject')">✗</button>
+            <button class="btn btn-success btn-sm" onclick="actTs(${t.id},'approve')">✓</button>
+            <button class="btn btn-danger btn-sm" onclick="actTs(${t.id},'reject')">✗</button>
           </td>
         </tr>`).join('')}</tbody>
       </table></div>` : '<div class="empty-state"><div class="empty-icon"><i class="bx bxs-check-circle"></i></div><p>No pending timesheets</p></div>';

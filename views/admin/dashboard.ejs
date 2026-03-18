@@ -135,7 +135,7 @@ async function loadDashboard() {
       <div class="table-wrapper"><table>
         <thead><tr><th>Employee</th><th>Type</th><th>Days</th><th>Actions</th></tr></thead>
         <tbody>${pendLeaves.slice(0,5).map(l=>`<tr>
-          <td><strong>${l.userId?.name || '—'}</strong></td>
+          <td><strong>${l.user?.name || '—'}</strong></td>
           <td style="text-transform:capitalize">${l.type}</td>
           <td>${l.days}</td>
           <td class="flex gap-2">
@@ -149,7 +149,7 @@ async function loadDashboard() {
       <div class="table-wrapper"><table>
         <thead><tr><th>Employee</th><th>Week</th><th>Hours</th><th>Actions</th></tr></thead>
         <tbody>${pendTs.slice(0,5).map(t=>`<tr>
-          <td><strong>${t.userId?.name || '—'}</strong></td>
+          <td><strong>${t.user?.name || '—'}</strong></td>
           <td>${fmtDate(t.weekStart)}</td>
           <td>${t.totalHours}h</td>
           <td class="flex gap-2">

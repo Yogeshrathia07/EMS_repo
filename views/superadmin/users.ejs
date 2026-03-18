@@ -72,9 +72,9 @@ async function init() {
   try {
     companies = await api('GET','/companies');
     const coSel = document.getElementById('f-company');
-    coSel.innerHTML = '<option value="">All Companies</option>' + companies.map(c=>`<option value="${c._id}">${c.name}</option>`).join('');
+    coSel.innerHTML = '<option value="">All Companies</option>' + companies.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
     const uCoSel = document.getElementById('u-company');
-    uCoSel.innerHTML = '<option value="">Select company...</option>' + companies.map(c=>`<option value="${c._id}">${c.name}</option>`).join('');
+    uCoSel.innerHTML = '<option value="">Select company...</option>' + companies.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
     loadUsers();
   } catch(e) { toast(e.message,'error'); }
 }
@@ -85,7 +85,7 @@ async function loadUsers() {
     let filtered = allUsers;
     const fCo = document.getElementById('f-company').value;
     const fRole = document.getElementById('f-role').value;
-    if (fCo) filtered = filtered.filter(u=>u.companyId?._id===fCo||u.companyId===fCo);
+    if (fCo) filtered = filtered.filter(u=>u.company?.id===fCo||String(u.companyId)===fCo);
     if (fRole) filtered = filtered.filter(u=>u.role===fRole);
 
     const tbody = document.getElementById('users-tbody');
@@ -98,8 +98,8 @@ async function loadUsers() {
       <td>${statusBadge(u.status)}</td>
       <td style="font-size:12px;color:var(--text-muted)">${fmtDate(u.createdAt)}</td>
       <td>
-        <button class="btn btn-ghost btn-sm" onclick="editUser('${u._id}')">Edit</button>
-        <button class="btn btn-danger btn-sm" onclick="delUser('${u._id}')">Delete</button>
+        <button class="btn btn-ghost btn-sm" onclick="editUser('${u.id}')">Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="delUser('${u.id}')">Delete</button>
       </td>
     </tr>`).join('');
   } catch(e) { toast(e.message,'error'); }
@@ -117,14 +117,14 @@ function openCreate() {
 }
 
 async function editUser(id) {
-  const u = allUsers.find(x=>x._id===id);
+  const u = allUsers.find(x=>x.id===id);
   if (!u) return;
   editId = id;
   document.getElementById('u-modal-title').textContent = 'Edit User';
   document.getElementById('u-name').value = u.name;
   document.getElementById('u-email').value = u.email;
   document.getElementById('u-role').value = u.role;
-  document.getElementById('u-company').value = u.companyId?._id||u.companyId||'';
+  document.getElementById('u-company').value = u.company?.id||u.companyId||'';
   document.getElementById('u-salary').value = u.baseSalary||'';
   document.getElementById('u-status').value = u.status;
   document.getElementById('u-pass').value = '';
